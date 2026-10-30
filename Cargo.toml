@@ -9,7 +9,7 @@ Bluetooth Message Access Profile (MAP) 1.4 implementation in Rust, built on obex
 edition = "2021"
 rust-version = "1.85"
 readme = "README.md"
-repository = "https://github.com/ianmarmour/map"
+repository = "https://github.com/ianmarmour/obex-protocol-map"
 license = "MIT"
 keywords = ["map", "bluetooth", "obex", "sms", "messaging"]
 categories = ["network-programming", "parser-implementations"]
