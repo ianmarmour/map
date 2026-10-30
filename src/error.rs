@@ -37,9 +37,9 @@ impl Error {
     ///
     /// # Examples
     /// ```
-    /// # use obex::packet::Response;
-    /// # use obex::response::ResponseCode;
-    /// let error = map::Error::Obex(obex::Error::Response(Box::new(Response::new(
+    /// # use bluetooth_map::obex::packet::Response;
+    /// # use bluetooth_map::obex::response::ResponseCode;
+    /// let error = bluetooth_map::Error::Obex(bluetooth_map::obex::Error::Response(Box::new(Response::new(
     ///     ResponseCode::NotFound,
     /// ))));
     ///

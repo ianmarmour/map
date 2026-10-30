@@ -7,7 +7,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! map = { git = "https://github.com/ianmarmour/map", features = ["tokio"] }
+//! bluetooth-map-profile = { version = "0.1", features = ["tokio"] }
 //! ```
 //!
 //! They mirror the blocking types in [`crate::client`] and [`crate::server`] method
@@ -22,10 +22,10 @@
 //! # async fn example(
 //! #     mas_socket: tokio::net::TcpStream,
 //! #     mns_listener: tokio::net::TcpListener,
-//! # ) -> map::Result<()> {
-//! use map::event_report::{EventReport, EventType};
-//! use map::mas::GetMessageParams;
-//! use map::tokio::{MasClient, MnsServer};
+//! # ) -> bluetooth_map::Result<()> {
+//! use bluetooth_map::event_report::{EventReport, EventType};
+//! use bluetooth_map::mas::GetMessageParams;
+//! use bluetooth_map::tokio::{MasClient, MnsServer};
 //! use tokio::sync::mpsc;
 //!
 //! let mut client = MasClient::new(mas_socket);

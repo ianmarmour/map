@@ -2,18 +2,18 @@
 
 #![allow(dead_code)]
 
-use map::bmessage::{BMessage, BMessageBody, VCard};
-use map::conversation_listing::{Conversation, ConversationListing, Participant};
-use map::features::{MapSupportedFeatures, NotificationFilterMask};
-use map::folder_listing::{Folder, FolderListing};
-use map::mas::{
+use bluetooth_map::bmessage::{BMessage, BMessageBody, VCard};
+use bluetooth_map::conversation_listing::{Conversation, ConversationListing, Participant};
+use bluetooth_map::features::{MapSupportedFeatures, NotificationFilterMask};
+use bluetooth_map::folder_listing::{Folder, FolderListing};
+use bluetooth_map::mas::{
     ConversationListingParams, ConversationListingResponse, FractionContent, GetMessageParams,
     MasInstanceInformation, MessageFraction, MessageStatus, MessagesListingParams,
     MessagesListingResponse, OwnerStatus, PushMessageParams, SetFolder,
 };
-use map::messages_listing::MessageEntry;
-use map::server::MessageStore;
-use map::types::{
+use bluetooth_map::messages_listing::MessageEntry;
+use bluetooth_map::server::MessageStore;
+use bluetooth_map::types::{
     ConversationId, DatabaseIdentifier, FractionDeliver, FractionRequest, MessageHandle,
     MessageType, VersionCounter,
 };

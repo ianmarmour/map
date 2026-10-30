@@ -1,9 +1,11 @@
 [package]
-name = "map"
-version = "0.0.1"
+# Bluetooth profile crates are named `bluetooth-<profile>-profile` on crates.io and
+# imported without the suffix, so this library is `bluetooth_map`.
+name = "bluetooth-map-profile"
+version = "0.1.0"
 authors = ["Ian Armour <ianmarmour@gmail.com>"]
 description = """
-Bluetooth Message Access Profile (MAP) 1.4 implementation in Rust, built on the obex crate.
+Bluetooth Message Access Profile (MAP) 1.4 implementation in Rust, built on obex-protocol.
 """
 edition = "2021"
 rust-version = "1.85"
@@ -12,16 +14,19 @@ repository = "https://github.com/ianmarmour/map"
 license = "MIT"
 keywords = ["map", "bluetooth", "obex", "sms", "messaging"]
 categories = ["network-programming", "parser-implementations"]
+# The specification is copyrighted by the Bluetooth SIG, so it stays out of the package.
+exclude = ["docs/", ".github/"]
 
 [lib]
+name = "bluetooth_map"
 path = "src/lib.rs"
 
 [features]
-# Async clients, servers and handlers for tokio, in `map::tokio`.
+# Async clients, servers and handlers for tokio, in `bluetooth_map::tokio`.
 tokio = ["obex/tokio", "dep:tokio"]
 
 [dependencies]
-obex = { git = "https://github.com/ianmarmour/obex", branch = "main" }
+obex = { package = "obex-protocol", version = "0.1" }
 quick-xml = "0.41"
 tokio = { version = "1", optional = true, default-features = false }
 

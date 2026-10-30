@@ -419,9 +419,9 @@ impl MessagesListingParams {
     ///
     /// # Examples
     /// ```
-    /// # use map::mas::MessagesListingParams;
-    /// # use map::messages_listing::MessageEntry;
-    /// # use map::types::{MessageHandle, ReadStatusFilter};
+    /// # use bluetooth_map::mas::MessagesListingParams;
+    /// # use bluetooth_map::messages_listing::MessageEntry;
+    /// # use bluetooth_map::types::{MessageHandle, ReadStatusFilter};
     /// let mut unread = MessageEntry::new(MessageHandle(1));
     /// unread.read = Some(false);
     /// let mut read = MessageEntry::new(MessageHandle(2));

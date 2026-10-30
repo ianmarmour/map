@@ -16,10 +16,10 @@
 //!
 //! Listing the newest unread messages of the inbox and reading the first one:
 //! ```no_run
-//! # fn example(socket: std::net::TcpStream) -> map::Result<()> {
-//! use map::client::MasClient;
-//! use map::mas::{GetMessageParams, MessagesListingParams, MessageStatus};
-//! use map::types::ReadStatusFilter;
+//! # fn example(socket: std::net::TcpStream) -> bluetooth_map::Result<()> {
+//! use bluetooth_map::client::MasClient;
+//! use bluetooth_map::mas::{GetMessageParams, MessagesListingParams, MessageStatus};
+//! use bluetooth_map::types::ReadStatusFilter;
 //!
 //! let mut client = MasClient::new(socket);
 //! client.connect()?;
@@ -295,10 +295,10 @@ impl<T: Read + Write> MasClient<T> {
 ///
 /// # Examples
 /// ```no_run
-/// # fn example(socket: std::net::TcpStream) -> map::Result<()> {
-/// use map::client::MnsClient;
-/// use map::event_report::{EventReport, EventType};
-/// use map::types::{MessageHandle, MessageType};
+/// # fn example(socket: std::net::TcpStream) -> bluetooth_map::Result<()> {
+/// use bluetooth_map::client::MnsClient;
+/// use bluetooth_map::event_report::{EventReport, EventType};
+/// use bluetooth_map::types::{MessageHandle, MessageType};
 ///
 /// let mut client = MnsClient::new(socket);
 /// client.connect()?;

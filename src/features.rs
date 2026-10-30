@@ -10,7 +10,7 @@
 //!
 //! # Examples
 //! ```
-//! use map::features::MapSupportedFeatures;
+//! use bluetooth_map::features::MapSupportedFeatures;
 //!
 //! let features = MapSupportedFeatures::NOTIFICATION_REGISTRATION
 //!     | MapSupportedFeatures::NOTIFICATION
@@ -249,8 +249,8 @@ bit_mask!(
     ///
     /// # Examples
     /// ```
-    /// # use map::features::MessageTypeFilter;
-    /// # use map::types::MessageType;
+    /// # use bluetooth_map::features::MessageTypeFilter;
+    /// # use bluetooth_map::types::MessageType;
     /// let filter = MessageTypeFilter::only(&[MessageType::SmsGsm, MessageType::Mms]);
     ///
     /// assert!(filter.includes(MessageType::SmsGsm));

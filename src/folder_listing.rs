@@ -6,7 +6,7 @@
 //!
 //! # Examples
 //! ```
-//! use map::folder_listing::FolderListing;
+//! use bluetooth_map::folder_listing::FolderListing;
 //!
 //! let listing = FolderListing::parse(br#"<folder-listing version="1.0">
 //!   <folder name="inbox"/>
@@ -98,7 +98,7 @@ impl FolderListing {
     ///
     /// # Examples
     /// ```
-    /// # use map::folder_listing::{Folder, FolderListing};
+    /// # use bluetooth_map::folder_listing::{Folder, FolderListing};
     /// let listing = FolderListing::new([Folder::new("inbox")]);
     ///
     /// assert_eq!(listing, FolderListing::parse(&listing.to_bytes()).unwrap());

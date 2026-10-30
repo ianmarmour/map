@@ -17,15 +17,15 @@
 //! # fn example(
 //! #     mas_socket: std::net::TcpStream,
 //! #     mns_listener: std::net::TcpListener,
-//! # ) -> map::Result<()> {
-//! use map::client::MasClient;
-//! use map::event_report::EventReport;
-//! use map::server::MnsServer;
+//! # ) -> bluetooth_map::Result<()> {
+//! use bluetooth_map::client::MasClient;
+//! use bluetooth_map::event_report::EventReport;
+//! use bluetooth_map::server::MnsServer;
 //!
 //! let mut client = MasClient::new(mas_socket);
 //! client.connect()?;
 //!
-//! let notifications = std::thread::spawn(move || -> map::Result<()> {
+//! let notifications = std::thread::spawn(move || -> bluetooth_map::Result<()> {
 //!     let (socket, _) = mns_listener.accept()?;
 //!     MnsServer::new(socket, |instance: u8, report: EventReport| {
 //!         println!("MAS {}: {} {:?}", instance, report.event_type, report.handle);
@@ -298,13 +298,13 @@ impl<S: MessageStore> Handler for MasService<S> {
 ///
 /// # Examples
 /// ```no_run
-/// # fn example(socket: std::net::TcpStream) -> map::Result<()> {
-/// use map::bmessage::BMessage;
-/// use map::folder_listing::{Folder, FolderListing};
-/// use map::mas::{GetMessageParams, MessagesListingParams, MessagesListingResponse, SetFolder};
-/// use map::server::{MasServer, MessageStore};
-/// use map::types::MessageHandle;
-/// use obex::response::ResponseCode;
+/// # fn example(socket: std::net::TcpStream) -> bluetooth_map::Result<()> {
+/// use bluetooth_map::bmessage::BMessage;
+/// use bluetooth_map::folder_listing::{Folder, FolderListing};
+/// use bluetooth_map::mas::{GetMessageParams, MessagesListingParams, MessagesListingResponse, SetFolder};
+/// use bluetooth_map::server::{MasServer, MessageStore};
+/// use bluetooth_map::types::MessageHandle;
+/// use bluetooth_map::obex::response::ResponseCode;
 ///
 /// struct Phone;
 ///
