@@ -2,7 +2,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![CI](https://github.com/ianmarmour/map/workflows/CI/badge.svg)](https://github.com/ianmarmour/map/actions/workflows/ci.yml)
 
-An open source implementation of the Bluetooth Message Access Profile (MAP 1.4.2) in Rust, built on [`obex-protocol`](https://github.com/ianmarmour/obex).
+An open source implementation of the Bluetooth Message Access Profile (MAP 1.4.2) in Rust, built on [`obex-protocol`](https://github.com/ianmarmour/obex-protocol).
 
 ## What is MAP
 
