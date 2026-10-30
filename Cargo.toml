@@ -12,7 +12,7 @@ readme = "README.md"
 repository = "https://github.com/ianmarmour/obex-protocol-map"
 license = "MIT"
 keywords = ["map", "bluetooth", "obex", "sms", "messaging"]
-categories = ["network-programming", "parser-implementations"]
+categories = ["encoding", "network-programming"]
 # The specification is copyrighted by the Bluetooth SIG, so it stays out of the package.
 exclude = ["docs/", ".github/"]
 
