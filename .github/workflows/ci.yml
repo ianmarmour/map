@@ -8,6 +8,11 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # Fetch git dependencies with the git CLI so the credentials configured below apply.
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  # A token that can read the obex repository, needed while it is private. The
+  # workflow's own GITHUB_TOKEN can only read this repository.
+  OBEX_TOKEN: ${{ secrets.OBEX_TOKEN }}
 
 jobs:
   build:
@@ -15,6 +20,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Authenticate to the obex repository
+      if: env.OBEX_TOKEN != ''
+      run: git config --global url."https://x-access-token:${OBEX_TOKEN}@github.com/ianmarmour/obex".insteadOf "https://github.com/ianmarmour/obex"
     - name: Install stable toolchain
       run: rustup update stable && rustup default stable && rustup component add clippy rustfmt
     - name: Check formatting
@@ -34,6 +42,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Authenticate to the obex repository
+      if: env.OBEX_TOKEN != ''
+      run: git config --global url."https://x-access-token:${OBEX_TOKEN}@github.com/ianmarmour/obex".insteadOf "https://github.com/ianmarmour/obex"
     - name: Install Rust 1.85
       run: rustup toolchain install 1.85 --profile minimal
     - name: Check
