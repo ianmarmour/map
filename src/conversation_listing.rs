@@ -6,7 +6,7 @@
 //!
 //! # Examples
 //! ```
-//! use bluetooth_map::conversation_listing::ConversationListing;
+//! use obex_protocol_map::conversation_listing::ConversationListing;
 //!
 //! let listing = ConversationListing::parse(br#"<MAP-convo-listing version="1.0">
 //!   <conversation id="E1E2E3E4F1F2F3F4A1A2A3A4B1B2B3B4" name="Beergarden"
@@ -161,8 +161,8 @@ impl ConversationListing {
     ///
     /// # Examples
     /// ```
-    /// # use bluetooth_map::conversation_listing::{Conversation, ConversationListing, Participant};
-    /// # use bluetooth_map::types::ConversationId;
+    /// # use obex_protocol_map::conversation_listing::{Conversation, ConversationListing, Participant};
+    /// # use obex_protocol_map::types::ConversationId;
     /// let mut conversation = Conversation::new(ConversationId(1));
     /// conversation.participants.push(Participant::new("alice@example.com"));
     /// let listing = ConversationListing::new(vec![conversation]);

@@ -8,8 +8,8 @@
 //!
 //! # Examples
 //! ```
-//! use bluetooth_map::messages_listing::MessagesListing;
-//! use bluetooth_map::types::{MessageHandle, MessageType};
+//! use obex_protocol_map::messages_listing::MessagesListing;
+//! use obex_protocol_map::types::{MessageHandle, MessageType};
 //!
 //! let listing = MessagesListing::parse(br#"<MAP-msg-listing version="1.0">
 //!   <msg handle="20000100001" subject="Hello" datetime="20071213T130510"
@@ -277,8 +277,8 @@ impl MessagesListing {
     ///
     /// # Examples
     /// ```
-    /// # use bluetooth_map::messages_listing::{MessageEntry, MessagesListing};
-    /// # use bluetooth_map::types::MessageHandle;
+    /// # use obex_protocol_map::messages_listing::{MessageEntry, MessagesListing};
+    /// # use obex_protocol_map::types::MessageHandle;
     /// let mut entry = MessageEntry::new(MessageHandle(1));
     /// entry.subject = Some("Fish & chips".to_string());
     /// let listing = MessagesListing::new(vec![entry]);

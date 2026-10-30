@@ -17,15 +17,15 @@
 //! # fn example(
 //! #     mas_socket: std::net::TcpStream,
 //! #     mns_listener: std::net::TcpListener,
-//! # ) -> bluetooth_map::Result<()> {
-//! use bluetooth_map::client::MasClient;
-//! use bluetooth_map::event_report::EventReport;
-//! use bluetooth_map::server::MnsServer;
+//! # ) -> obex_protocol_map::Result<()> {
+//! use obex_protocol_map::client::MasClient;
+//! use obex_protocol_map::event_report::EventReport;
+//! use obex_protocol_map::server::MnsServer;
 //!
 //! let mut client = MasClient::new(mas_socket);
 //! client.connect()?;
 //!
-//! let notifications = std::thread::spawn(move || -> bluetooth_map::Result<()> {
+//! let notifications = std::thread::spawn(move || -> obex_protocol_map::Result<()> {
 //!     let (socket, _) = mns_listener.accept()?;
 //!     MnsServer::new(socket, |instance: u8, report: EventReport| {
 //!         println!("MAS {}: {} {:?}", instance, report.event_type, report.handle);
@@ -42,10 +42,10 @@
 //!
 use std::io::{Read, Write};
 
-use obex::packet::{Request, Response};
-use obex::response::ResponseCode;
-use obex::server::{Handler, Object, Server};
-use obex::target::{MESSAGE_ACCESS, MESSAGE_NOTIFICATION};
+use obex_protocol::packet::{Request, Response};
+use obex_protocol::response::ResponseCode;
+use obex_protocol::server::{Handler, Object, Server};
+use obex_protocol::target::{MESSAGE_ACCESS, MESSAGE_NOTIFICATION};
 
 use crate::bmessage::BMessage;
 use crate::error::Result;
@@ -298,13 +298,13 @@ impl<S: MessageStore> Handler for MasService<S> {
 ///
 /// # Examples
 /// ```no_run
-/// # fn example(socket: std::net::TcpStream) -> bluetooth_map::Result<()> {
-/// use bluetooth_map::bmessage::BMessage;
-/// use bluetooth_map::folder_listing::{Folder, FolderListing};
-/// use bluetooth_map::mas::{GetMessageParams, MessagesListingParams, MessagesListingResponse, SetFolder};
-/// use bluetooth_map::server::{MasServer, MessageStore};
-/// use bluetooth_map::types::MessageHandle;
-/// use bluetooth_map::obex::response::ResponseCode;
+/// # fn example(socket: std::net::TcpStream) -> obex_protocol_map::Result<()> {
+/// use obex_protocol_map::bmessage::BMessage;
+/// use obex_protocol_map::folder_listing::{Folder, FolderListing};
+/// use obex_protocol_map::mas::{GetMessageParams, MessagesListingParams, MessagesListingResponse, SetFolder};
+/// use obex_protocol_map::server::{MasServer, MessageStore};
+/// use obex_protocol_map::types::MessageHandle;
+/// use obex_protocol_map::obex_protocol::response::ResponseCode;
 ///
 /// struct Phone;
 ///

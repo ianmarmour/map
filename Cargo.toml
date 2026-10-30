@@ -1,7 +1,6 @@
 [package]
-# Bluetooth profile crates are named `bluetooth-<profile>-profile` on crates.io and
-# imported without the suffix, so this library is `bluetooth_map`.
-name = "bluetooth-map-profile"
+# Profiles built on obex-protocol are named `obex-protocol-<profile>`.
+name = "obex-protocol-map"
 version = "0.1.0"
 authors = ["Ian Armour <ianmarmour@gmail.com>"]
 description = """
@@ -18,15 +17,14 @@ categories = ["network-programming", "parser-implementations"]
 exclude = ["docs/", ".github/"]
 
 [lib]
-name = "bluetooth_map"
 path = "src/lib.rs"
 
 [features]
-# Async clients, servers and handlers for tokio, in `bluetooth_map::tokio`.
-tokio = ["obex/tokio", "dep:tokio"]
+# Async clients, servers and handlers for tokio, in `obex_protocol_map::tokio`.
+tokio = ["obex-protocol/tokio", "dep:tokio"]
 
 [dependencies]
-obex = { package = "obex-protocol", version = "0.1" }
+obex-protocol = "0.1"
 quick-xml = "0.41"
 tokio = { version = "1", optional = true, default-features = false }
 

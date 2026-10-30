@@ -1,4 +1,4 @@
-# bluetooth-map-profile
+# obex-protocol-map
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![CI](https://github.com/ianmarmour/map/workflows/CI/badge.svg)](https://github.com/ianmarmour/map/actions/workflows/ci.yml)
 
@@ -22,16 +22,16 @@ A building block for applications on either side of MAP. It covers both roles, b
 | MCE (car kit, PC, watch) | `client::MasClient` | `server::MnsServer` + `server::NotificationHandler` |
 | MSE (phone) | `server::MasServer` + `server::MessageStore` | `client::MnsClient` |
 
-With the `tokio` feature, `bluetooth_map::tokio` has async versions of all four with the same methods.
+With the `tokio` feature, `obex_protocol_map::tokio` has async versions of all four with the same methods.
 
 ```text
 +----------------------------------------------------------------+
 |  Your application                                              |
 +----------------------------------------------------------------+
-|  bluetooth_map::client / server   (blocking)                   |  roles
-|  bluetooth_map::tokio             (async, `tokio` feature)     |
-|  bluetooth_map::mas               functions and parameters     |
-|  bmessage, *_listing, event_report  MAP objects (no I/O)       |  codec
+|  client / server                    (blocking)                  |  roles
+|  tokio                              (async, `tokio` feature)    |
+|  mas                                functions and parameters    |
+|  bmessage, *_listing, event_report  MAP objects (no I/O)        |  codec
 |  types, features, sdp                                          |
 +----------------------------------------------------------------+
 |  obex-protocol (OBEX 1.5: packets, SRM, client and server)     |
@@ -46,23 +46,23 @@ With the `tokio` feature, `bluetooth_map::tokio` has async versions of all four 
 
 ## How Do I Use This Library
 
-The crate is published as `bluetooth-map-profile` and imported as `bluetooth_map`. It re-exports `obex-protocol` as `bluetooth_map::obex`, so no separate OBEX dependency is needed:
+The crate is published as `obex-protocol-map`, part of the `obex-protocol` family, and imported as `obex_protocol_map`. It re-exports `obex-protocol` as `obex_protocol_map::obex_protocol`, so no separate OBEX dependency is needed:
 
 ```toml
 [dependencies]
-bluetooth-map-profile = "0.1"
+obex-protocol-map = "0.1"
 # or, for the async API
-bluetooth-map-profile = { version = "0.1", features = ["tokio"] }
+obex-protocol-map = { version = "0.1", features = ["tokio"] }
 ```
 
-Open a socket to the phone with your Bluetooth stack (BlueZ, `bluer`, or the platform APIs), using the RFCOMM channel or L2CAP PSM from its Message Access Server SDP record (`bluetooth_map::sdp` has the UUIDs and attribute ids), and hand it to a client.
+Open a socket to the phone with your Bluetooth stack (BlueZ, `bluer`, or the platform APIs), using the RFCOMM channel or L2CAP PSM from its Message Access Server SDP record (`obex_protocol_map::sdp` has the UUIDs and attribute ids), and hand it to a client.
 
 ### Reading messages (MCE)
 
 ```rust
-use bluetooth_map::client::MasClient;
-use bluetooth_map::mas::{GetMessageParams, MessagesListingParams, MessageStatus};
-use bluetooth_map::types::ReadStatusFilter;
+use obex_protocol_map::client::MasClient;
+use obex_protocol_map::mas::{GetMessageParams, MessagesListingParams, MessageStatus};
+use obex_protocol_map::types::ReadStatusFilter;
 
 let mut client = MasClient::new(socket);
 client.connect()?;
@@ -86,9 +86,9 @@ for entry in unread.listing.unwrap_or_default().messages {
 ### Sending a message (MCE)
 
 ```rust
-use bluetooth_map::bmessage::{BMessage, BMessageBody, VCard};
-use bluetooth_map::mas::PushMessageParams;
-use bluetooth_map::types::MessageType;
+use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
+use obex_protocol_map::mas::PushMessageParams;
+use obex_protocol_map::types::MessageType;
 
 let sms = BMessage::new(MessageType::SmsGsm, BMessageBody::from_text("On my way!"))
     .with_recipient(VCard::telephone("+15551234567"));
@@ -102,8 +102,8 @@ let handle = client.push_message("outbox", &sms, &PushMessageParams::default())?
 Register an MNS SDP record, accept the phone's connection and run a `MnsServer`. Any closure taking the MAS instance id and the report is a handler:
 
 ```rust
-use bluetooth_map::event_report::EventReport;
-use bluetooth_map::server::MnsServer;
+use obex_protocol_map::event_report::EventReport;
+use obex_protocol_map::server::MnsServer;
 
 std::thread::spawn(move || {
     let (socket, _) = mns_listener.accept()?;
@@ -121,12 +121,12 @@ client.set_notification_registration(true)?;
 Implement `MessageStore` and run a `MasServer`. Only folder navigation, the two listings and GetMessage are required; other functions answer `Not Implemented` until you implement them. `MessagesListingParams::apply` filters, sorts and pages a folder's messages for you.
 
 ```rust
-use bluetooth_map::bmessage::BMessage;
-use bluetooth_map::folder_listing::FolderListing;
-use bluetooth_map::mas::{GetMessageParams, MessagesListingParams, MessagesListingResponse, SetFolder};
-use bluetooth_map::server::{MasServer, MessageStore};
-use bluetooth_map::types::MessageHandle;
-use bluetooth_map::obex::response::ResponseCode;
+use obex_protocol_map::bmessage::BMessage;
+use obex_protocol_map::folder_listing::FolderListing;
+use obex_protocol_map::mas::{GetMessageParams, MessagesListingParams, MessagesListingResponse, SetFolder};
+use obex_protocol_map::server::{MasServer, MessageStore};
+use obex_protocol_map::types::MessageHandle;
+use obex_protocol_map::obex_protocol::response::ResponseCode;
 
 struct Phone { /* ... */ }
 
@@ -149,7 +149,7 @@ MasServer::new(socket, Phone::new()).run()?;
 The async API mirrors the blocking one. Clients and servers work with any `AsyncRead + AsyncWrite` transport, such as `bluer`'s RFCOMM and L2CAP streams, and `MessageStore` and `NotificationHandler` are implemented with `async fn`:
 
 ```rust
-use bluetooth_map::tokio::{MasClient, MnsServer};
+use obex_protocol_map::tokio::{MasClient, MnsServer};
 
 let mut client = MasClient::new(l2cap_stream)
     .with_max_packet_length(l2cap_mtu)

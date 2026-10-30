@@ -2,22 +2,22 @@
 
 #![allow(dead_code)]
 
-use bluetooth_map::bmessage::{BMessage, BMessageBody, VCard};
-use bluetooth_map::conversation_listing::{Conversation, ConversationListing, Participant};
-use bluetooth_map::features::{MapSupportedFeatures, NotificationFilterMask};
-use bluetooth_map::folder_listing::{Folder, FolderListing};
-use bluetooth_map::mas::{
+use obex_protocol::response::ResponseCode;
+use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
+use obex_protocol_map::conversation_listing::{Conversation, ConversationListing, Participant};
+use obex_protocol_map::features::{MapSupportedFeatures, NotificationFilterMask};
+use obex_protocol_map::folder_listing::{Folder, FolderListing};
+use obex_protocol_map::mas::{
     ConversationListingParams, ConversationListingResponse, FractionContent, GetMessageParams,
     MasInstanceInformation, MessageFraction, MessageStatus, MessagesListingParams,
     MessagesListingResponse, OwnerStatus, PushMessageParams, SetFolder,
 };
-use bluetooth_map::messages_listing::MessageEntry;
-use bluetooth_map::server::MessageStore;
-use bluetooth_map::types::{
+use obex_protocol_map::messages_listing::MessageEntry;
+use obex_protocol_map::server::MessageStore;
+use obex_protocol_map::types::{
     ConversationId, DatabaseIdentifier, FractionDeliver, FractionRequest, MessageHandle,
     MessageType, VersionCounter,
 };
-use obex::response::ResponseCode;
 
 /// The virtual folder tree of MAP section 3.1.4.
 const FOLDERS: [&str; 7] = [

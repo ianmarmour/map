@@ -7,13 +7,13 @@
 //!
 use std::fmt;
 
-use obex::response::ResponseCode;
+use obex_protocol::response::ResponseCode;
 
 /// The `Error` type. See [the module level documentation](index.html) for more.
 #[derive(Debug)]
 pub enum Error {
     /// The OBEX session failed, or the remote device refused the request.
-    Obex(obex::Error),
+    Obex(obex_protocol::Error),
     /// A MAP object or parameter received from the remote device could not be parsed.
     Malformed {
         /// What was being parsed, such as `"bMessage"` or `"MAP-msg-listing"`.
@@ -37,9 +37,9 @@ impl Error {
     ///
     /// # Examples
     /// ```
-    /// # use bluetooth_map::obex::packet::Response;
-    /// # use bluetooth_map::obex::response::ResponseCode;
-    /// let error = bluetooth_map::Error::Obex(bluetooth_map::obex::Error::Response(Box::new(Response::new(
+    /// # use obex_protocol_map::obex_protocol::packet::Response;
+    /// # use obex_protocol_map::obex_protocol::response::ResponseCode;
+    /// let error = obex_protocol_map::Error::Obex(obex_protocol_map::obex_protocol::Error::Response(Box::new(Response::new(
     ///     ResponseCode::NotFound,
     /// ))));
     ///
@@ -83,15 +83,15 @@ impl std::error::Error for Error {
     }
 }
 
-impl From<obex::Error> for Error {
-    fn from(error: obex::Error) -> Error {
+impl From<obex_protocol::Error> for Error {
+    fn from(error: obex_protocol::Error) -> Error {
         Error::Obex(error)
     }
 }
 
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Error {
-        Error::Obex(obex::Error::Io(error))
+        Error::Obex(obex_protocol::Error::Io(error))
     }
 }
 

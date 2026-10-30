@@ -5,14 +5,14 @@
 //! ([`MasServer`](crate::server::MasServer)), blocking and async alike.
 //!
 //! This module also holds the OBEX object types and the Application Parameters tags
-//! MAP defines, for applications that drive [`obex`] directly.
+//! MAP defines, for applications that drive [`obex_protocol`] directly.
 //!
 use std::str::FromStr;
 
-use obex::header::Header;
-use obex::packet::{Request, Response, SetPathFlags};
-use obex::response::ResponseCode;
-use obex::tlv::ApplicationParameters;
+use obex_protocol::header::Header;
+use obex_protocol::packet::{Request, Response, SetPathFlags};
+use obex_protocol::response::ResponseCode;
+use obex_protocol::tlv::ApplicationParameters;
 
 use crate::bmessage::{BMessage, BMessageBody};
 use crate::conversation_listing::ConversationListing;
@@ -30,7 +30,7 @@ use crate::types::{
 };
 
 /// Type of the Folder-Listing object, `x-obex/folder-listing`.
-pub const FOLDER_LISTING_TYPE: &str = obex::target::FOLDER_LISTING_TYPE;
+pub const FOLDER_LISTING_TYPE: &str = obex_protocol::target::FOLDER_LISTING_TYPE;
 /// Type of the Messages-Listing object, `x-bt/MAP-msg-listing`.
 pub const MESSAGES_LISTING_TYPE: &str = "x-bt/MAP-msg-listing";
 /// Type of the bMessage object, `x-bt/message`.
@@ -419,9 +419,9 @@ impl MessagesListingParams {
     ///
     /// # Examples
     /// ```
-    /// # use bluetooth_map::mas::MessagesListingParams;
-    /// # use bluetooth_map::messages_listing::MessageEntry;
-    /// # use bluetooth_map::types::{MessageHandle, ReadStatusFilter};
+    /// # use obex_protocol_map::mas::MessagesListingParams;
+    /// # use obex_protocol_map::messages_listing::MessageEntry;
+    /// # use obex_protocol_map::types::{MessageHandle, ReadStatusFilter};
     /// let mut unread = MessageEntry::new(MessageHandle(1));
     /// unread.read = Some(false);
     /// let mut read = MessageEntry::new(MessageHandle(2));
@@ -847,19 +847,25 @@ impl OwnerStatus {
 
 fn put_u8(parameters: &mut ApplicationParameters, tag: u8, value: Option<u8>) {
     if let Some(value) = value {
-        parameters.push(obex::tlv::TagLengthValue::new(tag, [value]));
+        parameters.push(obex_protocol::tlv::TagLengthValue::new(tag, [value]));
     }
 }
 
 fn put_u16(parameters: &mut ApplicationParameters, tag: u8, value: Option<u16>) {
     if let Some(value) = value {
-        parameters.push(obex::tlv::TagLengthValue::new(tag, value.to_be_bytes()));
+        parameters.push(obex_protocol::tlv::TagLengthValue::new(
+            tag,
+            value.to_be_bytes(),
+        ));
     }
 }
 
 fn put_u32(parameters: &mut ApplicationParameters, tag: u8, value: Option<u32>) {
     if let Some(value) = value {
-        parameters.push(obex::tlv::TagLengthValue::new(tag, value.to_be_bytes()));
+        parameters.push(obex_protocol::tlv::TagLengthValue::new(
+            tag,
+            value.to_be_bytes(),
+        ));
     }
 }
 
@@ -871,7 +877,7 @@ fn put_flag(parameters: &mut ApplicationParameters, tag: u8, value: Option<bool>
 /// a null terminator.
 fn put_text<T: ToString>(parameters: &mut ApplicationParameters, tag: u8, value: Option<T>) {
     if let Some(value) = value {
-        parameters.push(obex::tlv::TagLengthValue::new(
+        parameters.push(obex_protocol::tlv::TagLengthValue::new(
             tag,
             value.to_string().into_bytes(),
         ));
@@ -930,7 +936,7 @@ impl From<Invalid> for Error {
 pub(crate) struct Parameters<'a>(Option<&'a ApplicationParameters>);
 
 impl<'a> Parameters<'a> {
-    pub(crate) fn of(headers: &'a obex::header::Headers) -> Parameters<'a> {
+    pub(crate) fn of(headers: &'a obex_protocol::header::Headers) -> Parameters<'a> {
         Parameters(headers.application_parameters())
     }
 
@@ -1121,7 +1127,7 @@ pub(crate) fn folder_listing_request(params: &FolderListingParams) -> Vec<Header
 }
 
 pub(crate) fn folder_listing_response(
-    response: &obex::client::GetResponse,
+    response: &obex_protocol::client::GetResponse,
 ) -> Result<FolderListing> {
     FolderListing::parse(&response.body)
 }
@@ -1133,7 +1139,9 @@ pub(crate) fn folder_listing_size_request() -> Vec<Header> {
     })
 }
 
-pub(crate) fn folder_listing_size_response(response: &obex::client::GetResponse) -> Result<u16> {
+pub(crate) fn folder_listing_size_response(
+    response: &obex_protocol::client::GetResponse,
+) -> Result<u16> {
     Parameters::of(&response.headers)
         .u16(tag::FOLDER_LISTING_SIZE)?
         .ok_or(Error::MissingParameter("FolderListingSize"))
@@ -1151,7 +1159,7 @@ pub(crate) fn messages_listing_request(
 }
 
 pub(crate) fn messages_listing_response(
-    response: &obex::client::GetResponse,
+    response: &obex_protocol::client::GetResponse,
 ) -> Result<MessagesListingResponse> {
     let parameters = Parameters::of(&response.headers);
 
@@ -1191,12 +1199,12 @@ pub(crate) fn message_request(
     typed(MESSAGE_TYPE, Some(handle.to_string()), parameters)
 }
 
-pub(crate) fn message_response(response: &obex::client::GetResponse) -> Result<BMessage> {
+pub(crate) fn message_response(response: &obex_protocol::client::GetResponse) -> Result<BMessage> {
     BMessage::parse(&response.body)
 }
 
 pub(crate) fn message_fraction_response(
-    response: &obex::client::GetResponse,
+    response: &obex_protocol::client::GetResponse,
 ) -> Result<MessageFraction> {
     let deliver = match Parameters::of(&response.headers).u8(tag::FRACTION_DELIVER)? {
         Some(0) => Some(FractionDeliver::More),
@@ -1226,7 +1234,7 @@ pub(crate) fn mas_instance_information_request(instance_id: u8) -> Vec<Header> {
 }
 
 pub(crate) fn mas_instance_information_response(
-    response: &obex::client::GetResponse,
+    response: &obex_protocol::client::GetResponse,
 ) -> Result<MasInstanceInformation> {
     Ok(MasInstanceInformation {
         information: String::from_utf8_lossy(&response.body)
@@ -1241,7 +1249,7 @@ pub(crate) fn conversation_listing_request(params: &ConversationListingParams) -
 }
 
 pub(crate) fn conversation_listing_response(
-    response: &obex::client::GetResponse,
+    response: &obex_protocol::client::GetResponse,
 ) -> Result<ConversationListingResponse> {
     let parameters = Parameters::of(&response.headers);
 
@@ -1263,7 +1271,9 @@ pub(crate) fn owner_status_request(conversation_id: Option<ConversationId>) -> V
     typed(OWNER_STATUS_TYPE, None, parameters)
 }
 
-pub(crate) fn owner_status_response(response: &obex::client::GetResponse) -> Result<OwnerStatus> {
+pub(crate) fn owner_status_response(
+    response: &obex_protocol::client::GetResponse,
+) -> Result<OwnerStatus> {
     Ok(OwnerStatus::from_parameters(&Parameters::of(
         &response.headers,
     ))?)
@@ -1629,7 +1639,7 @@ mod tests {
     use super::*;
     use crate::messages_listing::Direction;
     use crate::types::MessageType;
-    use obex::opcode::Opcode;
+    use obex_protocol::opcode::Opcode;
 
     fn get_request(headers: Vec<Header>) -> Request {
         Request::new(Opcode::Get, true, headers)
@@ -1759,7 +1769,10 @@ mod tests {
     #[test]
     fn malformed_parameters_are_bad_requests() {
         let mut parameters = ApplicationParameters::new();
-        parameters.push(obex::tlv::TagLengthValue::new(tag::MAX_LIST_COUNT, [1u8]));
+        parameters.push(obex_protocol::tlv::TagLengthValue::new(
+            tag::MAX_LIST_COUNT,
+            [1u8],
+        ));
         let request = get_request(vec![
             Header::Type(FOLDER_LISTING_TYPE.to_string()),
             Header::ApplicationParameters(parameters),

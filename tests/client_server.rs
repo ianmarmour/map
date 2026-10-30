@@ -9,24 +9,24 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{mpsc, Arc};
 use std::thread::{self, JoinHandle};
 
-use bluetooth_map::bmessage::{BMessage, BMessageBody, VCard};
-use bluetooth_map::client::{MasClient, MnsClient};
-use bluetooth_map::event_report::{EventReport, EventType};
-use bluetooth_map::features::{
+use common::{long_text, Phone, CONVERSATION};
+use obex_protocol::response::ResponseCode;
+use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
+use obex_protocol_map::client::{MasClient, MnsClient};
+use obex_protocol_map::event_report::{EventReport, EventType};
+use obex_protocol_map::features::{
     MapSupportedFeatures, MessageTypeFilter, NotificationFilterMask, ParameterMask,
 };
-use bluetooth_map::folder_listing::FolderListing;
-use bluetooth_map::mas::{
+use obex_protocol_map::folder_listing::FolderListing;
+use obex_protocol_map::mas::{
     ConversationListingParams, FolderListingParams, Forward, FractionContent, GetMessageParams,
     MessageStatus, MessagesListingParams, OwnerStatus, PushMessageParams, SetFolder,
 };
-use bluetooth_map::server::{MasServer, MnsServer};
-use bluetooth_map::types::{
+use obex_protocol_map::server::{MasServer, MnsServer};
+use obex_protocol_map::types::{
     Charset, ConversationId, DatabaseIdentifier, FractionDeliver, FractionRequest, MessageHandle,
     MessageType, ModifyText, ReadStatusFilter, VersionCounter,
 };
-use common::{long_text, Phone, CONVERSATION};
-use obex::response::ResponseCode;
 
 /// A socket counting the packets written to it.
 struct Counting {
@@ -527,7 +527,7 @@ fn delivers_event_reports_to_the_notification_server() {
 fn notification_handlers_can_refuse_events() {
     struct Busy;
 
-    impl bluetooth_map::server::NotificationHandler for Busy {
+    impl obex_protocol_map::server::NotificationHandler for Busy {
         fn event(&mut self, _instance: u8, _report: EventReport) -> Result<(), ResponseCode> {
             Err(ResponseCode::ServiceUnavailable)
         }

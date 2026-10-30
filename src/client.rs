@@ -16,10 +16,10 @@
 //!
 //! Listing the newest unread messages of the inbox and reading the first one:
 //! ```no_run
-//! # fn example(socket: std::net::TcpStream) -> bluetooth_map::Result<()> {
-//! use bluetooth_map::client::MasClient;
-//! use bluetooth_map::mas::{GetMessageParams, MessagesListingParams, MessageStatus};
-//! use bluetooth_map::types::ReadStatusFilter;
+//! # fn example(socket: std::net::TcpStream) -> obex_protocol_map::Result<()> {
+//! use obex_protocol_map::client::MasClient;
+//! use obex_protocol_map::mas::{GetMessageParams, MessagesListingParams, MessageStatus};
+//! use obex_protocol_map::types::ReadStatusFilter;
 //!
 //! let mut client = MasClient::new(socket);
 //! client.connect()?;
@@ -47,8 +47,8 @@
 //!
 use std::io::{Read, Write};
 
-use obex::client::Client;
-use obex::target::{MESSAGE_ACCESS, MESSAGE_NOTIFICATION};
+use obex_protocol::client::Client;
+use obex_protocol::target::{MESSAGE_ACCESS, MESSAGE_NOTIFICATION};
 
 use crate::bmessage::BMessage;
 use crate::error::Result;
@@ -295,10 +295,10 @@ impl<T: Read + Write> MasClient<T> {
 ///
 /// # Examples
 /// ```no_run
-/// # fn example(socket: std::net::TcpStream) -> bluetooth_map::Result<()> {
-/// use bluetooth_map::client::MnsClient;
-/// use bluetooth_map::event_report::{EventReport, EventType};
-/// use bluetooth_map::types::{MessageHandle, MessageType};
+/// # fn example(socket: std::net::TcpStream) -> obex_protocol_map::Result<()> {
+/// use obex_protocol_map::client::MnsClient;
+/// use obex_protocol_map::event_report::{EventReport, EventType};
+/// use obex_protocol_map::types::{MessageHandle, MessageType};
 ///
 /// let mut client = MnsClient::new(socket);
 /// client.connect()?;

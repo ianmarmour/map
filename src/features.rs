@@ -10,7 +10,7 @@
 //!
 //! # Examples
 //! ```
-//! use bluetooth_map::features::MapSupportedFeatures;
+//! use obex_protocol_map::features::MapSupportedFeatures;
 //!
 //! let features = MapSupportedFeatures::NOTIFICATION_REGISTRATION
 //!     | MapSupportedFeatures::NOTIFICATION
@@ -249,8 +249,8 @@ bit_mask!(
     ///
     /// # Examples
     /// ```
-    /// # use bluetooth_map::features::MessageTypeFilter;
-    /// # use bluetooth_map::types::MessageType;
+    /// # use obex_protocol_map::features::MessageTypeFilter;
+    /// # use obex_protocol_map::types::MessageType;
     /// let filter = MessageTypeFilter::only(&[MessageType::SmsGsm, MessageType::Mms]);
     ///
     /// assert!(filter.includes(MessageType::SmsGsm));
