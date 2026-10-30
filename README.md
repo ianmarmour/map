@@ -1,8 +1,8 @@
-# map
+# obex-protocol-map
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![CI](https://github.com/ianmarmour/map/workflows/CI/badge.svg)](https://github.com/ianmarmour/map/actions/workflows/ci.yml)
 
-An open source implementation of the Bluetooth Message Access Profile (MAP 1.4.2) in Rust, built on the [`obex`](https://github.com/ianmarmour/obex) crate.
+An open source implementation of the Bluetooth Message Access Profile (MAP 1.4.2) in Rust, built on [`obex-protocol`](https://github.com/ianmarmour/obex).
 
 ## What is MAP
 
@@ -22,19 +22,19 @@ A building block for applications on either side of MAP. It covers both roles, b
 | MCE (car kit, PC, watch) | `client::MasClient` | `server::MnsServer` + `server::NotificationHandler` |
 | MSE (phone) | `server::MasServer` + `server::MessageStore` | `client::MnsClient` |
 
-With the `tokio` feature, `map::tokio` has async versions of all four with the same methods.
+With the `tokio` feature, `obex_protocol_map::tokio` has async versions of all four with the same methods.
 
 ```text
 +----------------------------------------------------------------+
 |  Your application                                              |
 +----------------------------------------------------------------+
-|  map::client / map::server        (blocking)                   |  roles
-|  map::tokio                       (async, `tokio` feature)      |
-|  map::mas                          functions and parameters    |
-|  map::bmessage, *_listing, event_report  MAP objects (no I/O)  |  codec
-|  map::types, map::features, map::sdp                           |
+|  client / server                    (blocking)                  |  roles
+|  tokio                              (async, `tokio` feature)    |
+|  mas                                functions and parameters    |
+|  bmessage, *_listing, event_report  MAP objects (no I/O)        |  codec
+|  types, features, sdp                                          |
 +----------------------------------------------------------------+
-|  obex (OBEX 1.5: packets, SRM, client and server engines)      |
+|  obex-protocol (OBEX 1.5: packets, SRM, client and server)     |
 +----------------------------------------------------------------+
 |  RFCOMM (GOEP 1.1)  or  L2CAP ERTM (GOEP 2.0)                  |  any Read + Write
 +----------------------------------------------------------------+
@@ -42,27 +42,27 @@ With the `tokio` feature, `map::tokio` has async versions of all four with the s
 
 * **Objects**: bMessage (1.0 and 1.1, with `LENGTH` computation, `END:MSG` escaping and quoted-printable vCards), Folder-Listing, Messages-Listing (1.0 and 1.1), Conversation-Listing and MAP-Event-Report (1.0, 1.1 and 1.2). Parsing is lenient where devices are known to deviate, such as bare `&` in XML attributes, LF line endings or wrong bMessage lengths.
 * **Functions**: every MAP function, with typed parameters and results, encoded to and from OBEX headers and Application Parameters.
-* **Clients and servers**: thin layers over `obex::client::Client` and `obex::server::Server` (or their tokio versions) that take care of directed connections, MAS and MNS targets, `MapSupportedFeatures`, filler bytes and response codes.
+* **Clients and servers**: thin layers over the `obex-protocol` client and server (or their tokio versions) that take care of directed connections, MAS and MNS targets, `MapSupportedFeatures`, filler bytes and response codes.
 
 ## How Do I Use This Library
 
-Until it is published, depend on it through git:
+The crate is published as `obex-protocol-map`, part of the `obex-protocol` family, and imported as `obex_protocol_map`. It re-exports `obex-protocol` as `obex_protocol_map::obex_protocol`, so no separate OBEX dependency is needed:
 
 ```toml
 [dependencies]
-map = { git = "https://github.com/ianmarmour/map" }
+obex-protocol-map = "0.1"
 # or, for the async API
-map = { git = "https://github.com/ianmarmour/map", features = ["tokio"] }
+obex-protocol-map = { version = "0.1", features = ["tokio"] }
 ```
 
-Open a socket to the phone with your Bluetooth stack (BlueZ, `bluer`, or the platform APIs), using the RFCOMM channel or L2CAP PSM from its Message Access Server SDP record (`map::sdp` has the UUIDs and attribute ids), and hand it to a client.
+Open a socket to the phone with your Bluetooth stack (BlueZ, `bluer`, or the platform APIs), using the RFCOMM channel or L2CAP PSM from its Message Access Server SDP record (`obex_protocol_map::sdp` has the UUIDs and attribute ids), and hand it to a client.
 
 ### Reading messages (MCE)
 
 ```rust
-use map::client::MasClient;
-use map::mas::{GetMessageParams, MessagesListingParams, MessageStatus};
-use map::types::ReadStatusFilter;
+use obex_protocol_map::client::MasClient;
+use obex_protocol_map::mas::{GetMessageParams, MessagesListingParams, MessageStatus};
+use obex_protocol_map::types::ReadStatusFilter;
 
 let mut client = MasClient::new(socket);
 client.connect()?;
@@ -86,9 +86,9 @@ for entry in unread.listing.unwrap_or_default().messages {
 ### Sending a message (MCE)
 
 ```rust
-use map::bmessage::{BMessage, BMessageBody, VCard};
-use map::mas::PushMessageParams;
-use map::types::MessageType;
+use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
+use obex_protocol_map::mas::PushMessageParams;
+use obex_protocol_map::types::MessageType;
 
 let sms = BMessage::new(MessageType::SmsGsm, BMessageBody::from_text("On my way!"))
     .with_recipient(VCard::telephone("+15551234567"));
@@ -102,8 +102,8 @@ let handle = client.push_message("outbox", &sms, &PushMessageParams::default())?
 Register an MNS SDP record, accept the phone's connection and run a `MnsServer`. Any closure taking the MAS instance id and the report is a handler:
 
 ```rust
-use map::event_report::EventReport;
-use map::server::MnsServer;
+use obex_protocol_map::event_report::EventReport;
+use obex_protocol_map::server::MnsServer;
 
 std::thread::spawn(move || {
     let (socket, _) = mns_listener.accept()?;
@@ -121,12 +121,12 @@ client.set_notification_registration(true)?;
 Implement `MessageStore` and run a `MasServer`. Only folder navigation, the two listings and GetMessage are required; other functions answer `Not Implemented` until you implement them. `MessagesListingParams::apply` filters, sorts and pages a folder's messages for you.
 
 ```rust
-use map::bmessage::BMessage;
-use map::folder_listing::FolderListing;
-use map::mas::{GetMessageParams, MessagesListingParams, MessagesListingResponse, SetFolder};
-use map::server::{MasServer, MessageStore};
-use map::types::MessageHandle;
-use obex::response::ResponseCode;
+use obex_protocol_map::bmessage::BMessage;
+use obex_protocol_map::folder_listing::FolderListing;
+use obex_protocol_map::mas::{GetMessageParams, MessagesListingParams, MessagesListingResponse, SetFolder};
+use obex_protocol_map::server::{MasServer, MessageStore};
+use obex_protocol_map::types::MessageHandle;
+use obex_protocol_map::obex_protocol::response::ResponseCode;
 
 struct Phone { /* ... */ }
 
@@ -149,7 +149,7 @@ MasServer::new(socket, Phone::new()).run()?;
 The async API mirrors the blocking one. Clients and servers work with any `AsyncRead + AsyncWrite` transport, such as `bluer`'s RFCOMM and L2CAP streams, and `MessageStore` and `NotificationHandler` are implemented with `async fn`:
 
 ```rust
-use map::tokio::{MasClient, MnsServer};
+use obex_protocol_map::tokio::{MasClient, MnsServer};
 
 let mut client = MasClient::new(l2cap_stream)
     .with_max_packet_length(l2cap_mtu)

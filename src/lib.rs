@@ -3,8 +3,8 @@
 //! MAP lets a device such as a car kit, a watch or a PC (the *MCE*, Message Client
 //! Equipment) browse, read, send and delete the messages (SMS, MMS, e-mail and
 //! instant messages) stored on a phone (the *MSE*, Message Server Equipment), and be
-//! notified when they change. It runs on OBEX, implemented by the [`obex`] crate,
-//! and defines two OBEX services:
+//! notified when they change. It runs on OBEX, implemented by the re-exported
+//! [`obex_protocol`] crate, and defines two OBEX services:
 //!
 //! * the **Message Access Service** (MAS), where the MCE is the client and the MSE
 //!   the server, carrying the MAP functions such as GetMessagesListing and
@@ -47,11 +47,11 @@
 //!
 //! Reading the unread SMS on a phone, as an MCE:
 //! ```no_run
-//! # fn example(socket: std::net::TcpStream) -> map::Result<()> {
-//! use map::client::MasClient;
-//! use map::features::MessageTypeFilter;
-//! use map::mas::{GetMessageParams, MessagesListingParams};
-//! use map::types::{MessageType, ReadStatusFilter};
+//! # fn example(socket: std::net::TcpStream) -> obex_protocol_map::Result<()> {
+//! use obex_protocol_map::client::MasClient;
+//! use obex_protocol_map::features::MessageTypeFilter;
+//! use obex_protocol_map::mas::{GetMessageParams, MessagesListingParams};
+//! use obex_protocol_map::types::{MessageType, ReadStatusFilter};
 //!
 //! let mut client = MasClient::new(socket);
 //! client.connect()?;
@@ -78,10 +78,10 @@
 //!
 //! Sending an SMS through the phone:
 //! ```no_run
-//! # fn example(client: &mut map::client::MasClient<std::net::TcpStream>) -> map::Result<()> {
-//! use map::bmessage::{BMessage, BMessageBody, VCard};
-//! use map::mas::PushMessageParams;
-//! use map::types::MessageType;
+//! # fn example(client: &mut obex_protocol_map::client::MasClient<std::net::TcpStream>) -> obex_protocol_map::Result<()> {
+//! use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
+//! use obex_protocol_map::mas::PushMessageParams;
+//! use obex_protocol_map::types::MessageType;
 //!
 //! let message = BMessage::new(MessageType::SmsGsm, BMessageBody::from_text("On my way!"))
 //!     .with_recipient(VCard::telephone("+15551234567"));
@@ -112,3 +112,8 @@ pub mod types;
 mod xml;
 
 pub use crate::error::{Error, Result};
+
+/// The OBEX implementation this crate is built on, re-exported so its types, such
+/// as [`ResponseCode`](obex_protocol::response::ResponseCode), need no separate
+/// dependency.
+pub use obex_protocol;

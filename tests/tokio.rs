@@ -6,18 +6,18 @@
 mod common;
 
 use common::{long_text, Phone};
-use map::bmessage::{BMessage, BMessageBody, VCard};
-use map::event_report::{EventReport, EventType};
-use map::features::{MapSupportedFeatures, NotificationFilterMask};
-use map::folder_listing::FolderListing;
-use map::mas::{
+use obex_protocol::response::ResponseCode;
+use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
+use obex_protocol_map::event_report::{EventReport, EventType};
+use obex_protocol_map::features::{MapSupportedFeatures, NotificationFilterMask};
+use obex_protocol_map::folder_listing::FolderListing;
+use obex_protocol_map::mas::{
     GetMessageParams, MessageStatus, MessagesListingParams, MessagesListingResponse, OwnerStatus,
     PushMessageParams, SetFolder,
 };
-use map::server::MessageStore as _;
-use map::tokio::{MasClient, MasServer, MessageStore, MnsClient, MnsServer};
-use map::types::{ConversationId, MessageHandle, MessageType};
-use obex::response::ResponseCode;
+use obex_protocol_map::server::MessageStore as _;
+use obex_protocol_map::tokio::{MasClient, MasServer, MessageStore, MnsClient, MnsServer};
+use obex_protocol_map::types::{ConversationId, MessageHandle, MessageType};
 use tokio::io::duplex;
 use tokio::sync::mpsc;
 
@@ -197,7 +197,7 @@ async fn async_client_with_blocking_server() {
     client_socket.set_nonblocking(true).unwrap();
 
     let server = std::thread::spawn(move || {
-        let mut server = map::server::MasServer::new(server_socket, Phone::new());
+        let mut server = obex_protocol_map::server::MasServer::new(server_socket, Phone::new());
         server.run().unwrap();
         server.into_parts().1
     });
@@ -235,7 +235,7 @@ async fn blocking_client_with_async_server() {
     });
 
     let phone = tokio::task::spawn_blocking(move || {
-        let mut client = map::client::MasClient::new(client_socket);
+        let mut client = obex_protocol_map::client::MasClient::new(client_socket);
         client.connect().unwrap();
         client.set_folder_path("telecom/msg/inbox").unwrap();
         let size = client

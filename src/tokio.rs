@@ -7,7 +7,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! map = { git = "https://github.com/ianmarmour/map", features = ["tokio"] }
+//! obex-protocol-map = { version = "0.1", features = ["tokio"] }
 //! ```
 //!
 //! They mirror the blocking types in [`crate::client`] and [`crate::server`] method
@@ -22,10 +22,10 @@
 //! # async fn example(
 //! #     mas_socket: tokio::net::TcpStream,
 //! #     mns_listener: tokio::net::TcpListener,
-//! # ) -> map::Result<()> {
-//! use map::event_report::{EventReport, EventType};
-//! use map::mas::GetMessageParams;
-//! use map::tokio::{MasClient, MnsServer};
+//! # ) -> obex_protocol_map::Result<()> {
+//! use obex_protocol_map::event_report::{EventReport, EventType};
+//! use obex_protocol_map::mas::GetMessageParams;
+//! use obex_protocol_map::tokio::{MasClient, MnsServer};
 //! use tokio::sync::mpsc;
 //!
 //! let mut client = MasClient::new(mas_socket);
@@ -56,10 +56,10 @@
 use std::future::Future;
 
 use ::tokio::io::{AsyncRead, AsyncWrite};
-use obex::packet::{Request, Response};
-use obex::response::ResponseCode;
-use obex::target::{MESSAGE_ACCESS, MESSAGE_NOTIFICATION};
-use obex::tokio::{Client, Handler, Object, Server};
+use obex_protocol::packet::{Request, Response};
+use obex_protocol::response::ResponseCode;
+use obex_protocol::target::{MESSAGE_ACCESS, MESSAGE_NOTIFICATION};
+use obex_protocol::tokio::{Client, Handler, Object, Server};
 
 use crate::bmessage::BMessage;
 use crate::error::Result;

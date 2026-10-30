@@ -39,8 +39,8 @@
 //!
 //! Composing an SMS to push to the outbox:
 //! ```
-//! use map::bmessage::{BMessage, BMessageBody, VCard};
-//! use map::types::MessageType;
+//! use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
+//! use obex_protocol_map::types::MessageType;
 //!
 //! let message = BMessage::new(MessageType::SmsGsm, BMessageBody::from_text("Hello!"))
 //!     .with_recipient(VCard::telephone("+15551234567"));
@@ -228,7 +228,7 @@ impl BMessageBody {
     ///
     /// # Examples
     /// ```
-    /// # use map::bmessage::BMessageBody;
+    /// # use obex_protocol_map::bmessage::BMessageBody;
     /// let body = BMessageBody::from_text("Hi");
     ///
     /// assert_eq!(Some("UTF-8"), body.charset.as_deref());
@@ -475,8 +475,8 @@ impl BMessage {
     ///
     /// # Examples
     /// ```
-    /// # use map::bmessage::BMessage;
-    /// # use map::types::MessageType;
+    /// # use obex_protocol_map::bmessage::BMessage;
+    /// # use obex_protocol_map::types::MessageType;
     /// let message = BMessage::parse(b"BEGIN:BMSG\r\nVERSION:1.0\r\nSTATUS:READ\r\n\
     ///     TYPE:SMS_GSM\r\nFOLDER:telecom/msg/inbox\r\nBEGIN:VCARD\r\nVERSION:2.1\r\n\
     ///     N:Joachim\r\nTEL:+498912345678\r\nEND:VCARD\r\nBEGIN:BENV\r\nBEGIN:BBODY\r\n\

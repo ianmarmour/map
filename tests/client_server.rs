@@ -10,23 +10,23 @@ use std::sync::{mpsc, Arc};
 use std::thread::{self, JoinHandle};
 
 use common::{long_text, Phone, CONVERSATION};
-use map::bmessage::{BMessage, BMessageBody, VCard};
-use map::client::{MasClient, MnsClient};
-use map::event_report::{EventReport, EventType};
-use map::features::{
+use obex_protocol::response::ResponseCode;
+use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
+use obex_protocol_map::client::{MasClient, MnsClient};
+use obex_protocol_map::event_report::{EventReport, EventType};
+use obex_protocol_map::features::{
     MapSupportedFeatures, MessageTypeFilter, NotificationFilterMask, ParameterMask,
 };
-use map::folder_listing::FolderListing;
-use map::mas::{
+use obex_protocol_map::folder_listing::FolderListing;
+use obex_protocol_map::mas::{
     ConversationListingParams, FolderListingParams, Forward, FractionContent, GetMessageParams,
     MessageStatus, MessagesListingParams, OwnerStatus, PushMessageParams, SetFolder,
 };
-use map::server::{MasServer, MnsServer};
-use map::types::{
+use obex_protocol_map::server::{MasServer, MnsServer};
+use obex_protocol_map::types::{
     Charset, ConversationId, DatabaseIdentifier, FractionDeliver, FractionRequest, MessageHandle,
     MessageType, ModifyText, ReadStatusFilter, VersionCounter,
 };
-use obex::response::ResponseCode;
 
 /// A socket counting the packets written to it.
 struct Counting {
@@ -527,7 +527,7 @@ fn delivers_event_reports_to_the_notification_server() {
 fn notification_handlers_can_refuse_events() {
     struct Busy;
 
-    impl map::server::NotificationHandler for Busy {
+    impl obex_protocol_map::server::NotificationHandler for Busy {
         fn event(&mut self, _instance: u8, _report: EventReport) -> Result<(), ResponseCode> {
             Err(ResponseCode::ServiceUnavailable)
         }

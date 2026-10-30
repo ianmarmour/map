@@ -33,7 +33,7 @@ fn parse_hex(text: &str, max_digits: usize, object: &'static str) -> Result<u128
 ///
 /// # Examples
 /// ```
-/// # use map::types::MessageHandle;
+/// # use obex_protocol_map::types::MessageHandle;
 /// let handle: MessageHandle = "20000100001".parse().unwrap();
 ///
 /// assert_eq!(MessageHandle(0x20000100001), handle);
@@ -96,7 +96,7 @@ hex_identifier!(
     ///
     /// # Examples
     /// ```
-    /// # use map::types::ConversationId;
+    /// # use obex_protocol_map::types::ConversationId;
     /// let id: ConversationId = "E1E2E3E4F1F2F3F4A1A2A3A4B1B2B3B4".parse().unwrap();
     ///
     /// assert_eq!("E1E2E3E4F1F2F3F4A1A2A3A4B1B2B3B4", id.to_string());
@@ -124,7 +124,7 @@ hex_identifier!(
 ///
 /// # Examples
 /// ```
-/// # use map::types::MessageType;
+/// # use obex_protocol_map::types::MessageType;
 /// assert_eq!(MessageType::SmsGsm, "SMS_GSM".parse().unwrap());
 /// assert_eq!("EMAIL", MessageType::Email.as_str());
 /// ```
@@ -201,7 +201,7 @@ pub enum UtcOffset {
 ///
 /// # Examples
 /// ```
-/// # use map::types::{Timestamp, UtcOffset};
+/// # use obex_protocol_map::types::{Timestamp, UtcOffset};
 /// let time: Timestamp = "20140706T095000-0400".parse().unwrap();
 ///
 /// assert_eq!(2014, time.year);
@@ -249,7 +249,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```
-    /// # use map::types::Timestamp;
+    /// # use obex_protocol_map::types::Timestamp;
     /// assert_eq!("20000229T120000Z", Timestamp::from_unix_time(951_825_600).to_string());
     /// ```
     pub fn from_unix_time(seconds: i64) -> Timestamp {

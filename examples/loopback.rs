@@ -12,17 +12,17 @@
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::thread;
 
-use map::bmessage::{BMessage, BMessageBody, VCard};
-use map::client::{MasClient, MnsClient};
-use map::event_report::{EventReport, EventType};
-use map::folder_listing::{Folder, FolderListing};
-use map::mas::{
+use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
+use obex_protocol_map::client::{MasClient, MnsClient};
+use obex_protocol_map::event_report::{EventReport, EventType};
+use obex_protocol_map::folder_listing::{Folder, FolderListing};
+use obex_protocol_map::mas::{
     GetMessageParams, MessagesListingParams, MessagesListingResponse, PushMessageParams, SetFolder,
 };
-use map::messages_listing::MessageEntry;
-use map::server::{MasServer, MessageStore, MnsServer};
-use map::types::{MessageHandle, MessageType};
-use obex::response::ResponseCode;
+use obex_protocol_map::messages_listing::MessageEntry;
+use obex_protocol_map::obex_protocol::response::ResponseCode;
+use obex_protocol_map::server::{MasServer, MessageStore, MnsServer};
+use obex_protocol_map::types::{MessageHandle, MessageType};
 
 /// A phone with a few messages, connecting back to the client for notifications.
 struct Phone {
@@ -167,20 +167,20 @@ impl MessageStore for Phone {
     }
 }
 
-fn main() -> map::Result<()> {
+fn main() -> obex_protocol_map::Result<()> {
     let mas_listener = TcpListener::bind("127.0.0.1:0")?;
     let mns_listener = TcpListener::bind("127.0.0.1:0")?;
     let mas_address = mas_listener.local_addr()?;
     let mns_address = mns_listener.local_addr()?;
 
     // The phone serves the Message Access Service.
-    let phone = thread::spawn(move || -> map::Result<()> {
+    let phone = thread::spawn(move || -> obex_protocol_map::Result<()> {
         let (socket, _) = mas_listener.accept()?;
         MasServer::new(socket, Phone::new(mns_address)).run()
     });
 
     // The client serves the Message Notification Service.
-    let notifications = thread::spawn(move || -> map::Result<()> {
+    let notifications = thread::spawn(move || -> obex_protocol_map::Result<()> {
         let (socket, _) = mns_listener.accept()?;
         MnsServer::new(socket, |instance: u8, report: EventReport| {
             println!(

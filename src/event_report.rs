@@ -7,8 +7,8 @@
 //!
 //! # Examples
 //! ```
-//! use map::event_report::{EventReport, EventType};
-//! use map::types::MessageHandle;
+//! use obex_protocol_map::event_report::{EventReport, EventType};
+//! use obex_protocol_map::types::MessageHandle;
 //!
 //! let report = EventReport::parse(br#"<MAP-event-report version="1.0">
 //!   <event type="NewMessage" handle="12345678" folder="TELECOM/MSG/INBOX" msg_type="SMS_CDMA"/>
@@ -261,8 +261,8 @@ impl EventReport {
     ///
     /// # Examples
     /// ```
-    /// # use map::event_report::{EventReport, EventType};
-    /// # use map::types::{MessageHandle, MessageType};
+    /// # use obex_protocol_map::event_report::{EventReport, EventType};
+    /// # use obex_protocol_map::types::{MessageHandle, MessageType};
     /// let report = EventReport::message(
     ///     EventType::NewMessage,
     ///     MessageHandle(1),
