@@ -17,6 +17,7 @@
 //! ```
 //!
 use crate::error::Result;
+use crate::prelude::*;
 use crate::xml::{self, Node, Tag};
 
 const OBJECT: &str = "folder-listing";

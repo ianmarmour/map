@@ -18,11 +18,12 @@
 //! assert_eq!(Some(MessageHandle(0x12345678)), report.handle);
 //! ```
 //!
-use std::fmt;
-use std::str::FromStr;
+use core::fmt;
+use core::str::FromStr;
 
 use crate::error::{Error, Result};
 use crate::features::NotificationFilterMask;
+use crate::prelude::*;
 use crate::types::{ConversationId, MessageHandle, MessageType};
 use crate::xml::{self, Node, Tag};
 

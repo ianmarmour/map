@@ -1,6 +1,8 @@
 //! End to end tests running the blocking clients against the blocking servers over
 //! socket pairs.
 
+#![cfg(feature = "std")]
+
 mod common;
 
 use std::io::{self, Read, Write};

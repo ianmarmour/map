@@ -4,10 +4,11 @@
 //! (MAP section 3.1.1), 128-bit identifiers written as hexadecimal strings (sections
 //! 3.1.14 to 3.1.16), message types (section 2.3) and timestamps (section 3.1.10).
 //!
-use std::fmt;
-use std::str::FromStr;
+use core::fmt;
+use core::str::FromStr;
 
 use crate::error::Error;
+use crate::prelude::*;
 
 /// Parses up to `max_digits` hexadecimal digits, tolerating surrounding whitespace
 /// and null terminators.
@@ -284,6 +285,7 @@ impl Timestamp {
     }
 
     /// The current UTC time.
+    #[cfg(feature = "std")]
     pub fn now() -> Timestamp {
         let seconds = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -325,7 +327,7 @@ impl FromStr for Timestamp {
             return Err(malformed());
         }
 
-        let number = |range: std::ops::Range<usize>| -> Result<u16, Error> {
+        let number = |range: core::ops::Range<usize>| -> Result<u16, Error> {
             let digits = text.get(range).ok_or_else(malformed)?;
             if !digits.bytes().all(|byte| byte.is_ascii_digit()) {
                 return Err(malformed());

@@ -24,10 +24,11 @@
 //! assert_eq!(Some(true), message.read);
 //! ```
 //!
-use std::fmt;
-use std::str::FromStr;
+use core::fmt;
+use core::str::FromStr;
 
 use crate::error::{Error, Result};
+use crate::prelude::*;
 use crate::types::{ConversationId, MessageHandle, MessageType};
 use crate::xml::{self, Node, Tag};
 
@@ -183,7 +184,7 @@ fn split_addresses(addresses: &str) -> Vec<String> {
     while let Some(c) = chars.next() {
         match c {
             '\\' => current.extend(chars.next()),
-            ';' => list.push(std::mem::take(&mut current)),
+            ';' => list.push(core::mem::take(&mut current)),
             c => current.push(c),
         }
     }

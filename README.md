@@ -15,14 +15,14 @@ MAP runs on OBEX and defines two services:
 
 ## What is This Library
 
-A building block for applications on either side of MAP. It covers both roles, blocking and async:
+A building block for applications on either side of MAP. It covers both roles, blocking and async, on desktops, servers and embedded devices without `std`:
 
 | Role | Message Access Service | Message Notification Service |
 |------|------------------------|------------------------------|
 | MCE (car kit, PC, watch) | `client::MasClient` | `server::MnsServer` + `server::NotificationHandler` |
 | MSE (phone) | `server::MasServer` + `server::MessageStore` | `client::MnsClient` |
 
-With the `tokio` feature, `obex_protocol_map::tokio` has async versions of all four with the same methods.
+With the `tokio` feature, `obex_protocol_map::tokio` has async versions of all four with the same methods, and with the `embedded-io-async` feature `obex_protocol_map::embedded` has them for embedded devices.
 
 ```text
 +----------------------------------------------------------------+
@@ -30,19 +30,20 @@ With the `tokio` feature, `obex_protocol_map::tokio` has async versions of all f
 +----------------------------------------------------------------+
 |  client / server                    (blocking)                  |  roles
 |  tokio                              (async, `tokio` feature)    |
+|  embedded                           (async, no_std)             |
 |  mas                                functions and parameters    |
 |  bmessage, *_listing, event_report  MAP objects (no I/O)        |  codec
-|  types, features, sdp                                          |
+|  types, features, sdp                                          |  (no_std)
 +----------------------------------------------------------------+
 |  obex-protocol (OBEX 1.5: packets, SRM, client and server)     |
 +----------------------------------------------------------------+
-|  RFCOMM (GOEP 1.1)  or  L2CAP ERTM (GOEP 2.0)                  |  any Read + Write
+|  RFCOMM (GOEP 1.1)  or  L2CAP ERTM (GOEP 2.0)                  |  any byte stream
 +----------------------------------------------------------------+
 ```
 
 * **Objects**: bMessage (1.0 and 1.1, with `LENGTH` computation, `END:MSG` escaping and quoted-printable vCards), Folder-Listing, Messages-Listing (1.0 and 1.1), Conversation-Listing and MAP-Event-Report (1.0, 1.1 and 1.2). Parsing is lenient where devices are known to deviate, such as bare `&` in XML attributes, LF line endings or wrong bMessage lengths.
 * **Functions**: every MAP function, with typed parameters and results, encoded to and from OBEX headers and Application Parameters.
-* **Clients and servers**: thin layers over the `obex-protocol` client and server (or their tokio versions) that take care of directed connections, MAS and MNS targets, `MapSupportedFeatures`, filler bytes and response codes.
+* **Clients and servers**: thin layers over the `obex-protocol` client and server (or their tokio and embedded versions) that take care of directed connections, MAS and MNS targets, `MapSupportedFeatures`, filler bytes and response codes.
 
 ## How Do I Use This Library
 
@@ -50,9 +51,9 @@ The crate is published as `obex-protocol-map`, part of the `obex-protocol` famil
 
 ```toml
 [dependencies]
-obex-protocol-map = "0.1"
+obex-protocol-map = "0.2"
 # or, for the async API
-obex-protocol-map = { version = "0.1", features = ["tokio"] }
+obex-protocol-map = { version = "0.2", features = ["tokio"] }
 ```
 
 Open a socket to the phone with your Bluetooth stack (BlueZ, `bluer`, or the platform APIs), using the RFCOMM channel or L2CAP PSM from its Message Access Server SDP record (`obex_protocol_map::sdp` has the UUIDs and attribute ids), and hand it to a client.
@@ -165,6 +166,36 @@ tokio::spawn(async move {
 });
 ```
 
+### Embedded and `no_std`
+
+The default `std` feature provides the blocking roles. Turn it off and the crate is `no_std`, needing only `alloc`. The objects, functions and values are always available, and the `embedded-io-async` feature adds async clients and servers for any transport implementing the [`embedded-io-async`](https://crates.io/crates/embedded-io-async) traits, such as the Bluetooth channels of Embassy based firmware:
+
+```toml
+[dependencies]
+obex-protocol-map = { version = "0.2", default-features = false, features = ["embedded-io-async"] }
+```
+
+`obex_protocol_map::embedded` mirrors the tokio API, except that `MessageStore` and `NotificationHandler` futures need not be `Send`, so they can own peripherals and run on single threaded executors. A watch reading a phone's inbox:
+
+```rust
+use obex_protocol_map::embedded::{MasClient, MnsServer};
+use obex_protocol_map::mas::MessagesListingParams;
+
+let mut client = MasClient::new(mas_channel).with_max_packet_length(1024);
+client.connect().await?;
+client.set_folder_path("telecom/msg").await?;
+let inbox = client.get_messages_listing("inbox", &MessagesListingParams::default()).await?;
+
+client.set_notification_registration(true).await?;
+MnsServer::new(mns_channel, |_instance: u8, report: EventReport| async move {
+    // report.event_type, report.handle, ...
+})
+.run()
+.await?;
+```
+
+On small devices, lower `with_max_packet_length` (it bounds the OBEX buffers) and, for an MSE, `with_max_object_size`. Without `std` there is no clock, so a `MessageStore` should set `MessagesListingResponse::mse_time` itself; with `std` the server fills in the current time.
+
 ### Example
 
 `examples/loopback.rs` runs a pretend phone and a client over TCP on localhost, covering browsing, reading, sending and notifications:
@@ -202,4 +233,4 @@ The specification is in [`docs/MAP.pdf`](docs/MAP.pdf).
 
 ## Minimum Supported Rust Version
 
-Rust 1.85, checked in CI.
+Rust 1.85, checked in CI with and without `std`.

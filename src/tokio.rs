@@ -7,7 +7,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! obex-protocol-map = { version = "0.1", features = ["tokio"] }
+//! obex-protocol-map = { version = "0.2", features = ["tokio"] }
 //! ```
 //!
 //! They mirror the blocking types in [`crate::client`] and [`crate::server`] method

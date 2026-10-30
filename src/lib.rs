@@ -18,8 +18,9 @@
 //! | MSE (phone) | [`server::MasServer`] + [`server::MessageStore`] | [`client::MnsClient`] |
 //!
 //! With the `tokio` feature, [`tokio`](mod@crate::tokio) has async versions of all four,
-//! with the same methods. The blocking and async types share their encoding, so they
-//! behave identically and interoperate.
+//! with the same methods, and with the `embedded-io-async` feature
+//! [`embedded`](mod@crate::embedded) has them for embedded devices. The blocking and
+//! async types share their encoding, so they behave identically and interoperate.
 //!
 //! The crate is organized in layers, each usable on its own:
 //!
@@ -31,22 +32,37 @@
 //! * **Values**: [`types`] (message handles, conversation ids, timestamps, ...),
 //!   [`features`] (`MapSupportedFeatures` and the other bit masks) and [`sdp`]
 //!   (service discovery UUIDs and attributes).
-//! * **Roles**: [`client`], [`server`] and [`tokio`](mod@crate::tokio).
+//! * **Roles**: [`client`], [`server`], [`tokio`](mod@crate::tokio) and
+//!   [`embedded`](mod@crate::embedded).
+//!
+//! ## Embedded and `no_std`
+//!
+//! The default `std` feature provides the blocking roles. Without it the crate is
+//! `no_std` and needs only `alloc`: the objects, functions and values are always
+//! available, and the `embedded-io-async` feature adds the async roles in
+//! [`embedded`](mod@crate::embedded), for transports implementing the
+//! `embedded-io-async` traits, such as those of Embassy based firmware.
+//!
+//! ```toml
+//! [dependencies]
+//! obex-protocol-map = { version = "0.2", default-features = false, features = ["embedded-io-async"] }
+//! ```
 //!
 //! ## Transports
 //!
 //! MAP runs over an RFCOMM channel (GOEP 1.1) or an L2CAP channel in Enhanced
 //! Retransmission Mode (GOEP 2.0), both found through SDP (see [`sdp`]). Opening
 //! sockets, pairing and SDP belong to a Bluetooth stack, such as BlueZ through the
-//! `bluer` crate, or the platform APIs. Anything implementing [`std::io::Read`] and
-//! [`std::io::Write`], or tokio's `AsyncRead` and `AsyncWrite`, can be handed to
-//! this crate. Over L2CAP, set the maximum packet length to the channel MTU and
+//! `bluer` crate, the platform APIs or an embedded host stack. Anything implementing
+//! `std::io::Read` and `std::io::Write`, tokio's `AsyncRead` and `AsyncWrite`, or the
+//! `embedded-io-async` traits can be handed to this crate. Over L2CAP, set the maximum packet length to the channel MTU and
 //! enable Single Response Mode on both clients and servers; over RFCOMM leave it off.
 //!
 //! ## Example
 //!
 //! Reading the unread SMS on a phone, as an MCE:
 //! ```no_run
+//! # #[cfg(feature = "std")]
 //! # fn example(socket: std::net::TcpStream) -> obex_protocol_map::Result<()> {
 //! use obex_protocol_map::client::MasClient;
 //! use obex_protocol_map::features::MessageTypeFilter;
@@ -78,6 +94,7 @@
 //!
 //! Sending an SMS through the phone:
 //! ```no_run
+//! # #[cfg(feature = "std")]
 //! # fn example(client: &mut obex_protocol_map::client::MasClient<std::net::TcpStream>) -> obex_protocol_map::Result<()> {
 //! use obex_protocol_map::bmessage::{BMessage, BMessageBody, VCard};
 //! use obex_protocol_map::mas::PushMessageParams;
@@ -92,11 +109,17 @@
 //! # }
 //! ```
 //!
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
 
+extern crate alloc;
+
 pub mod bmessage;
+#[cfg(feature = "std")]
 pub mod client;
 pub mod conversation_listing;
+#[cfg(feature = "embedded-io-async")]
+pub mod embedded;
 pub mod error;
 pub mod event_report;
 pub mod features;
@@ -104,6 +127,7 @@ pub mod folder_listing;
 pub mod mas;
 pub mod messages_listing;
 pub mod sdp;
+#[cfg(feature = "std")]
 pub mod server;
 #[cfg(feature = "tokio")]
 pub mod tokio;
@@ -112,6 +136,18 @@ pub mod types;
 mod xml;
 
 pub use crate::error::{Error, Result};
+
+/// The `alloc` types the standard prelude would otherwise provide, so modules
+/// compile the same with and without `std`.
+#[allow(unused_imports)]
+mod prelude {
+    pub(crate) use alloc::borrow::ToOwned;
+    pub(crate) use alloc::boxed::Box;
+    pub(crate) use alloc::format;
+    pub(crate) use alloc::string::{String, ToString};
+    pub(crate) use alloc::vec;
+    pub(crate) use alloc::vec::Vec;
+}
 
 /// The OBEX implementation this crate is built on, re-exported so its types, such
 /// as [`ResponseCode`](obex_protocol::response::ResponseCode), need no separate

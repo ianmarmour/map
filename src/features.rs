@@ -20,9 +20,10 @@
 //! assert_eq!(0x07, features.bits());
 //! ```
 //!
-use std::fmt;
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign};
+use core::fmt;
+use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign};
 
+use crate::prelude::*;
 use crate::types::MessageType;
 
 macro_rules! bit_mask {

@@ -5,12 +5,15 @@
 //! [`Error::Obex`]; [`Error::response_code`] gives the response code of a refused
 //! request directly.
 //!
-use std::fmt;
+use core::fmt;
 
 use obex_protocol::response::ResponseCode;
 
+use crate::prelude::*;
+
 /// The `Error` type. See [the module level documentation](index.html) for more.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// The OBEX session failed, or the remote device refused the request.
     Obex(obex_protocol::Error),
@@ -74,8 +77,8 @@ impl fmt::Display for Error {
     }
 }
 
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {
             Error::Obex(error) => Some(error),
             _ => None,
@@ -89,6 +92,7 @@ impl From<obex_protocol::Error> for Error {
     }
 }
 
+#[cfg(feature = "std")]
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Error {
         Error::Obex(obex_protocol::Error::Io(error))
@@ -96,4 +100,4 @@ impl From<std::io::Error> for Error {
 }
 
 /// A `Result` alias where the `Err` case is a MAP [`Error`].
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;

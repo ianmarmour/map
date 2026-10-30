@@ -22,6 +22,7 @@
 //! ```
 //!
 use crate::error::Result;
+use crate::prelude::*;
 use crate::types::{ConversationId, VersionCounter};
 use crate::xml::{self, Element, Node, Tag};
 

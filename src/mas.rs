@@ -7,7 +7,13 @@
 //! This module also holds the OBEX object types and the Application Parameters tags
 //! MAP defines, for applications that drive [`obex_protocol`] directly.
 //!
-use std::str::FromStr;
+// The request and reply encoding below serves the role modules, which a build with
+// neither `std` nor `embedded-io-async` leaves out.
+#![cfg_attr(
+    not(any(feature = "std", feature = "embedded-io-async")),
+    allow(dead_code)
+)]
+use core::str::FromStr;
 
 use obex_protocol::header::Header;
 use obex_protocol::packet::{Request, Response, SetPathFlags};
@@ -24,6 +30,7 @@ use crate::features::{
 };
 use crate::folder_listing::FolderListing;
 use crate::messages_listing::{MessageEntry, MessagesListing};
+use crate::prelude::*;
 use crate::types::{
     Charset, ConversationId, DatabaseIdentifier, FractionDeliver, FractionRequest, MessageHandle,
     ModifyText, PriorityFilter, ReadStatusFilter, Timestamp, UtcOffset, VersionCounter,
@@ -218,7 +225,7 @@ impl FolderListingParams {
 
     fn from_parameters(
         parameters: &Parameters<'_>,
-    ) -> std::result::Result<FolderListingParams, Invalid> {
+    ) -> core::result::Result<FolderListingParams, Invalid> {
         Ok(FolderListingParams {
             max_list_count: parameters.u16(tag::MAX_LIST_COUNT)?,
             list_start_offset: parameters.u16(tag::LIST_START_OFFSET)?,
@@ -331,7 +338,7 @@ impl MessagesListingParams {
 
     fn from_parameters(
         parameters: &Parameters<'_>,
-    ) -> std::result::Result<MessagesListingParams, Invalid> {
+    ) -> core::result::Result<MessagesListingParams, Invalid> {
         Ok(MessagesListingParams {
             max_list_count: parameters.u16(tag::MAX_LIST_COUNT)?,
             list_start_offset: parameters.u16(tag::LIST_START_OFFSET)?,
@@ -552,6 +559,9 @@ pub struct MessagesListingResponse {
     /// Whether there are unread messages in the listing (`NewMessage`).
     pub new_message: Option<bool>,
     /// The MSE's current local time and UTC offset (`MSETime`).
+    ///
+    /// Servers fill in the current UTC time when this is `None`, except without
+    /// `std`, where there is no clock and stores should set it.
     pub mse_time: Option<String>,
     /// The number of messages matching the filters (`ListingSize`).
     pub listing_size: Option<u16>,
@@ -669,7 +679,7 @@ impl PushMessageParams {
 
     fn from_parameters(
         parameters: &Parameters<'_>,
-    ) -> std::result::Result<PushMessageParams, Invalid> {
+    ) -> core::result::Result<PushMessageParams, Invalid> {
         let forward = match parameters.parsed(tag::MESSAGE_HANDLE)? {
             Some(message_handle) => Some(Forward {
                 message_handle,
@@ -762,7 +772,7 @@ impl ConversationListingParams {
 
     fn from_parameters(
         parameters: &Parameters<'_>,
-    ) -> std::result::Result<ConversationListingParams, Invalid> {
+    ) -> core::result::Result<ConversationListingParams, Invalid> {
         Ok(ConversationListingParams {
             max_list_count: parameters.u16(tag::MAX_LIST_COUNT)?,
             list_start_offset: parameters.u16(tag::LIST_START_OFFSET)?,
@@ -832,7 +842,7 @@ impl OwnerStatus {
         parameters
     }
 
-    fn from_parameters(parameters: &Parameters<'_>) -> std::result::Result<OwnerStatus, Invalid> {
+    fn from_parameters(parameters: &Parameters<'_>) -> core::result::Result<OwnerStatus, Invalid> {
         Ok(OwnerStatus {
             presence_availability: parameters.u8(tag::PRESENCE_AVAILABILITY)?,
             presence_text: parameters.text(tag::PRESENCE_TEXT),
@@ -944,25 +954,25 @@ impl<'a> Parameters<'a> {
         self.0.and_then(|parameters| parameters.get_bytes(tag))
     }
 
-    fn array<const N: usize>(&self, tag: u8) -> std::result::Result<Option<[u8; N]>, Invalid> {
+    fn array<const N: usize>(&self, tag: u8) -> core::result::Result<Option<[u8; N]>, Invalid> {
         self.bytes(tag)
             .map(|value| value.try_into().map_err(|_| Invalid(tag)))
             .transpose()
     }
 
-    pub(crate) fn u8(&self, tag: u8) -> std::result::Result<Option<u8>, Invalid> {
+    pub(crate) fn u8(&self, tag: u8) -> core::result::Result<Option<u8>, Invalid> {
         Ok(self.array::<1>(tag)?.map(u8::from_be_bytes))
     }
 
-    pub(crate) fn u16(&self, tag: u8) -> std::result::Result<Option<u16>, Invalid> {
+    pub(crate) fn u16(&self, tag: u8) -> core::result::Result<Option<u16>, Invalid> {
         Ok(self.array::<2>(tag)?.map(u16::from_be_bytes))
     }
 
-    pub(crate) fn u32(&self, tag: u8) -> std::result::Result<Option<u32>, Invalid> {
+    pub(crate) fn u32(&self, tag: u8) -> core::result::Result<Option<u32>, Invalid> {
         Ok(self.array::<4>(tag)?.map(u32::from_be_bytes))
     }
 
-    pub(crate) fn flag(&self, tag: u8) -> std::result::Result<Option<bool>, Invalid> {
+    pub(crate) fn flag(&self, tag: u8) -> core::result::Result<Option<bool>, Invalid> {
         Ok(self.u8(tag)?.map(|value| value != 0))
     }
 
@@ -975,7 +985,7 @@ impl<'a> Parameters<'a> {
         })
     }
 
-    pub(crate) fn parsed<T: FromStr>(&self, tag: u8) -> std::result::Result<Option<T>, Invalid> {
+    pub(crate) fn parsed<T: FromStr>(&self, tag: u8) -> core::result::Result<Option<T>, Invalid> {
         self.text(tag)
             .filter(|text| !text.trim().is_empty())
             .map(|text| text.trim().parse().map_err(|_| Invalid(tag)))
@@ -1127,7 +1137,7 @@ pub(crate) fn folder_listing_request(params: &FolderListingParams) -> Vec<Header
 }
 
 pub(crate) fn folder_listing_response(
-    response: &obex_protocol::client::GetResponse,
+    response: &obex_protocol::packet::GetResponse,
 ) -> Result<FolderListing> {
     FolderListing::parse(&response.body)
 }
@@ -1140,7 +1150,7 @@ pub(crate) fn folder_listing_size_request() -> Vec<Header> {
 }
 
 pub(crate) fn folder_listing_size_response(
-    response: &obex_protocol::client::GetResponse,
+    response: &obex_protocol::packet::GetResponse,
 ) -> Result<u16> {
     Parameters::of(&response.headers)
         .u16(tag::FOLDER_LISTING_SIZE)?
@@ -1159,7 +1169,7 @@ pub(crate) fn messages_listing_request(
 }
 
 pub(crate) fn messages_listing_response(
-    response: &obex_protocol::client::GetResponse,
+    response: &obex_protocol::packet::GetResponse,
 ) -> Result<MessagesListingResponse> {
     let parameters = Parameters::of(&response.headers);
 
@@ -1199,12 +1209,12 @@ pub(crate) fn message_request(
     typed(MESSAGE_TYPE, Some(handle.to_string()), parameters)
 }
 
-pub(crate) fn message_response(response: &obex_protocol::client::GetResponse) -> Result<BMessage> {
+pub(crate) fn message_response(response: &obex_protocol::packet::GetResponse) -> Result<BMessage> {
     BMessage::parse(&response.body)
 }
 
 pub(crate) fn message_fraction_response(
-    response: &obex_protocol::client::GetResponse,
+    response: &obex_protocol::packet::GetResponse,
 ) -> Result<MessageFraction> {
     let deliver = match Parameters::of(&response.headers).u8(tag::FRACTION_DELIVER)? {
         Some(0) => Some(FractionDeliver::More),
@@ -1234,7 +1244,7 @@ pub(crate) fn mas_instance_information_request(instance_id: u8) -> Vec<Header> {
 }
 
 pub(crate) fn mas_instance_information_response(
-    response: &obex_protocol::client::GetResponse,
+    response: &obex_protocol::packet::GetResponse,
 ) -> Result<MasInstanceInformation> {
     Ok(MasInstanceInformation {
         information: String::from_utf8_lossy(&response.body)
@@ -1249,7 +1259,7 @@ pub(crate) fn conversation_listing_request(params: &ConversationListingParams) -
 }
 
 pub(crate) fn conversation_listing_response(
-    response: &obex_protocol::client::GetResponse,
+    response: &obex_protocol::packet::GetResponse,
 ) -> Result<ConversationListingResponse> {
     let parameters = Parameters::of(&response.headers);
 
@@ -1272,7 +1282,7 @@ pub(crate) fn owner_status_request(conversation_id: Option<ConversationId>) -> V
 }
 
 pub(crate) fn owner_status_response(
-    response: &obex_protocol::client::GetResponse,
+    response: &obex_protocol::packet::GetResponse,
 ) -> Result<OwnerStatus> {
     Ok(OwnerStatus::from_parameters(&Parameters::of(
         &response.headers,
@@ -1310,7 +1320,7 @@ fn is_type(request: &Request, content_type: &str) -> bool {
 impl MasGet {
     /// Recognizes a GET by its Type header. Unknown functions are a Bad Request (MAP
     /// section 6.3.3).
-    pub(crate) fn decode(request: &Request) -> std::result::Result<MasGet, ResponseCode> {
+    pub(crate) fn decode(request: &Request) -> core::result::Result<MasGet, ResponseCode> {
         let parameters = Parameters::of(&request.headers);
         let name = request.headers.name().unwrap_or("").to_string();
 
@@ -1380,7 +1390,7 @@ impl MasPut {
     pub(crate) fn decode(
         request: &Request,
         body: Option<Vec<u8>>,
-    ) -> std::result::Result<MasPut, ResponseCode> {
+    ) -> core::result::Result<MasPut, ResponseCode> {
         let parameters = Parameters::of(&request.headers);
         let body = body.ok_or(ResponseCode::BadRequest)?;
         let name = request.headers.name().unwrap_or("");
@@ -1472,14 +1482,20 @@ impl Reply {
         let listing_size = response
             .listing_size
             .or_else(|| entries.map(|messages| u16::try_from(messages.len()).unwrap_or(u16::MAX)));
-        let mse_time = response.mse_time.unwrap_or_else(|| {
-            Timestamp::now()
-                .with_offset(UtcOffset::Minutes(0))
-                .to_string()
+        // Without `std` there is no clock, so stores must provide the time themselves.
+        #[cfg(feature = "std")]
+        let mse_time = response.mse_time.or_else(|| {
+            Some(
+                Timestamp::now()
+                    .with_offset(UtcOffset::Minutes(0))
+                    .to_string(),
+            )
         });
+        #[cfg(not(feature = "std"))]
+        let mse_time = response.mse_time;
 
         put_flag(&mut parameters, tag::NEW_MESSAGE, new_message);
-        put_text(&mut parameters, tag::MSE_TIME, Some(mse_time));
+        put_text(&mut parameters, tag::MSE_TIME, mse_time);
         put_u16(&mut parameters, tag::LISTING_SIZE, listing_size);
         put_text(
             &mut parameters,
@@ -1580,7 +1596,7 @@ pub(crate) fn push_message_reply(handle: MessageHandle) -> Response {
 }
 
 /// The response to a function returning nothing.
-pub(crate) fn status_reply(result: std::result::Result<(), ResponseCode>) -> Response {
+pub(crate) fn status_reply(result: core::result::Result<(), ResponseCode>) -> Response {
     Response::new(result.err().unwrap_or(ResponseCode::Success))
 }
 
@@ -1588,7 +1604,7 @@ pub(crate) fn status_reply(result: std::result::Result<(), ResponseCode>) -> Res
 pub(crate) fn decode_connect(
     request: &Request,
     target: &[u8],
-) -> std::result::Result<Option<MapSupportedFeatures>, ResponseCode> {
+) -> core::result::Result<Option<MapSupportedFeatures>, ResponseCode> {
     if request.headers.target() != Some(target) {
         return Err(ResponseCode::ServiceUnavailable);
     }
@@ -1619,7 +1635,7 @@ pub(crate) fn send_event_request(mas_instance_id: u8, report: &EventReport) -> P
 pub(crate) fn decode_send_event(
     request: &Request,
     body: Option<Vec<u8>>,
-) -> std::result::Result<(u8, EventReport), ResponseCode> {
+) -> core::result::Result<(u8, EventReport), ResponseCode> {
     if !is_type(request, EVENT_REPORT_TYPE) {
         return Err(ResponseCode::BadRequest);
     }
@@ -1848,9 +1864,13 @@ mod tests {
         };
         assert_eq!(Some(1), parameters.get_u8(tag::NEW_MESSAGE));
         assert_eq!(Some(1), parameters.get_u16(tag::LISTING_SIZE));
-        assert!(parameters
-            .get_bytes(tag::MSE_TIME)
-            .is_some_and(|time| time.ends_with(b"+0000")));
+        // Without `std` there is no clock to take the time from.
+        assert_eq!(
+            cfg!(feature = "std"),
+            parameters
+                .get_bytes(tag::MSE_TIME)
+                .is_some_and(|time| time.ends_with(b"+0000"))
+        );
 
         let size = Reply::folder_listing(
             FolderListing::new([crate::folder_listing::Folder::new("inbox")]),

@@ -51,6 +51,7 @@
 //! ```
 //!
 use crate::error::{Error, Result};
+use crate::prelude::*;
 use crate::types::MessageType;
 
 const OBJECT: &str = "bMessage";
@@ -760,7 +761,7 @@ fn decode_quoted_printable(text: &str) -> Vec<u8> {
     while index < bytes.len() {
         let hex = bytes
             .get(index + 1..index + 3)
-            .and_then(|digits| std::str::from_utf8(digits).ok())
+            .and_then(|digits| core::str::from_utf8(digits).ok())
             .and_then(|digits| u8::from_str_radix(digits, 16).ok());
 
         match (bytes[index], hex) {
