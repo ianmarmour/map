@@ -1,0 +1,32 @@
+[package]
+name = "map"
+version = "0.0.1"
+authors = ["Ian Armour <ianmarmour@gmail.com>"]
+description = """
+Bluetooth Message Access Profile (MAP) 1.4 implementation in Rust, built on the obex crate.
+"""
+edition = "2021"
+rust-version = "1.85"
+readme = "README.md"
+repository = "https://github.com/ianmarmour/map"
+license = "MIT"
+keywords = ["map", "bluetooth", "obex", "sms", "messaging"]
+categories = ["network-programming", "parser-implementations"]
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+# Async clients, servers and handlers for tokio, in `map::tokio`.
+tokio = ["obex/tokio", "dep:tokio"]
+
+[dependencies]
+obex = { git = "https://github.com/ianmarmour/obex", branch = "main" }
+quick-xml = "0.41"
+tokio = { version = "1", optional = true, default-features = false }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["io-util", "macros", "net", "rt-multi-thread", "sync", "time"] }
+
+[package.metadata.docs.rs]
+all-features = true

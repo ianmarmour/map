@@ -1,2 +1,205 @@
 # map
-An open source implementation of Message Access Profile 1.4.2 in Rust
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![CI](https://github.com/ianmarmour/map/workflows/CI/badge.svg)](https://github.com/ianmarmour/map/actions/workflows/ci.yml)
+
+An open source implementation of the Bluetooth Message Access Profile (MAP 1.4.2) in Rust, built on the [`obex`](https://github.com/ianmarmour/obex) crate.
+
+## What is MAP
+
+The Message Access Profile lets a device such as a car kit, a smart watch or a PC (the *MCE*, Message Client Equipment) browse, read, send and delete the messages stored on a phone (the *MSE*, Message Server Equipment): SMS, MMS, e-mail and instant messages. The phone can also notify the MCE when messages arrive, are sent or change.
+
+MAP runs on OBEX and defines two services:
+
+* the **Message Access Service** (MAS): the MCE is the OBEX client and the phone the server. It carries the MAP functions, such as GetMessagesListing, GetMessage and PushMessage.
+* the **Message Notification Service** (MNS): the phone is the OBEX client and the MCE the server. It carries event reports, such as `NewMessage`.
+
+## What is This Library
+
+A building block for applications on either side of MAP. It covers both roles, blocking and async:
+
+| Role | Message Access Service | Message Notification Service |
+|------|------------------------|------------------------------|
+| MCE (car kit, PC, watch) | `client::MasClient` | `server::MnsServer` + `server::NotificationHandler` |
+| MSE (phone) | `server::MasServer` + `server::MessageStore` | `client::MnsClient` |
+
+With the `tokio` feature, `map::tokio` has async versions of all four with the same methods.
+
+```text
++----------------------------------------------------------------+
+|  Your application                                              |
++----------------------------------------------------------------+
+|  map::client / map::server        (blocking)                   |  roles
+|  map::tokio                       (async, `tokio` feature)      |
+|  map::mas                          functions and parameters    |
+|  map::bmessage, *_listing, event_report  MAP objects (no I/O)  |  codec
+|  map::types, map::features, map::sdp                           |
++----------------------------------------------------------------+
+|  obex (OBEX 1.5: packets, SRM, client and server engines)      |
++----------------------------------------------------------------+
+|  RFCOMM (GOEP 1.1)  or  L2CAP ERTM (GOEP 2.0)                  |  any Read + Write
++----------------------------------------------------------------+
+```
+
+* **Objects**: bMessage (1.0 and 1.1, with `LENGTH` computation, `END:MSG` escaping and quoted-printable vCards), Folder-Listing, Messages-Listing (1.0 and 1.1), Conversation-Listing and MAP-Event-Report (1.0, 1.1 and 1.2). Parsing is lenient where devices are known to deviate, such as bare `&` in XML attributes, LF line endings or wrong bMessage lengths.
+* **Functions**: every MAP function, with typed parameters and results, encoded to and from OBEX headers and Application Parameters.
+* **Clients and servers**: thin layers over `obex::client::Client` and `obex::server::Server` (or their tokio versions) that take care of directed connections, MAS and MNS targets, `MapSupportedFeatures`, filler bytes and response codes.
+
+## How Do I Use This Library
+
+Until it is published, depend on it through git:
+
+```toml
+[dependencies]
+map = { git = "https://github.com/ianmarmour/map" }
+# or, for the async API
+map = { git = "https://github.com/ianmarmour/map", features = ["tokio"] }
+```
+
+Open a socket to the phone with your Bluetooth stack (BlueZ, `bluer`, or the platform APIs), using the RFCOMM channel or L2CAP PSM from its Message Access Server SDP record (`map::sdp` has the UUIDs and attribute ids), and hand it to a client.
+
+### Reading messages (MCE)
+
+```rust
+use map::client::MasClient;
+use map::mas::{GetMessageParams, MessagesListingParams, MessageStatus};
+use map::types::ReadStatusFilter;
+
+let mut client = MasClient::new(socket);
+client.connect()?;
+client.set_folder_path("telecom/msg")?;
+
+let unread = client.get_messages_listing(
+    "inbox",
+    &MessagesListingParams {
+        filter_read_status: Some(ReadStatusFilter::Unread),
+        ..MessagesListingParams::default()
+    },
+)?;
+
+for entry in unread.listing.unwrap_or_default().messages {
+    let message = client.get_message(entry.handle, &GetMessageParams::default())?;
+    println!("{:?}: {}", entry.sender_addressing, message.text());
+    client.set_message_status(entry.handle, MessageStatus::Read(true))?;
+}
+```
+
+### Sending a message (MCE)
+
+```rust
+use map::bmessage::{BMessage, BMessageBody, VCard};
+use map::mas::PushMessageParams;
+use map::types::MessageType;
+
+let sms = BMessage::new(MessageType::SmsGsm, BMessageBody::from_text("On my way!"))
+    .with_recipient(VCard::telephone("+15551234567"));
+
+client.set_folder_path("telecom/msg")?;
+let handle = client.push_message("outbox", &sms, &PushMessageParams::default())?;
+```
+
+### Receiving notifications (MCE)
+
+Register an MNS SDP record, accept the phone's connection and run a `MnsServer`. Any closure taking the MAS instance id and the report is a handler:
+
+```rust
+use map::event_report::EventReport;
+use map::server::MnsServer;
+
+std::thread::spawn(move || {
+    let (socket, _) = mns_listener.accept()?;
+    MnsServer::new(socket, |instance: u8, report: EventReport| {
+        println!("{} {:?} in {:?}", report.event_type, report.handle, report.folder);
+    })
+    .run()
+});
+
+client.set_notification_registration(true)?;
+```
+
+### Serving messages (MSE)
+
+Implement `MessageStore` and run a `MasServer`. Only folder navigation, the two listings and GetMessage are required; other functions answer `Not Implemented` until you implement them. `MessagesListingParams::apply` filters, sorts and pages a folder's messages for you.
+
+```rust
+use map::bmessage::BMessage;
+use map::folder_listing::FolderListing;
+use map::mas::{GetMessageParams, MessagesListingParams, MessagesListingResponse, SetFolder};
+use map::server::{MasServer, MessageStore};
+use map::types::MessageHandle;
+use obex::response::ResponseCode;
+
+struct Phone { /* ... */ }
+
+impl MessageStore for Phone {
+    fn set_folder(&mut self, step: SetFolder) -> Result<(), ResponseCode> { /* ... */ }
+    fn get_folder_listing(&mut self) -> Result<FolderListing, ResponseCode> { /* ... */ }
+    fn get_messages_listing(&mut self, folder: &str, params: &MessagesListingParams)
+        -> Result<MessagesListingResponse, ResponseCode> {
+        Ok(params.apply(self.messages_in(folder)))
+    }
+    fn get_message(&mut self, handle: MessageHandle, params: &GetMessageParams)
+        -> Result<BMessage, ResponseCode> { /* ... */ }
+}
+
+MasServer::new(socket, Phone::new()).run()?;
+```
+
+### Async (tokio)
+
+The async API mirrors the blocking one. Clients and servers work with any `AsyncRead + AsyncWrite` transport, such as `bluer`'s RFCOMM and L2CAP streams, and `MessageStore` and `NotificationHandler` are implemented with `async fn`:
+
+```rust
+use map::tokio::{MasClient, MnsServer};
+
+let mut client = MasClient::new(l2cap_stream)
+    .with_max_packet_length(l2cap_mtu)
+    .with_single_response_mode(true);
+client.connect().await?;
+
+tokio::spawn(async move {
+    MnsServer::new(mns_stream, |_instance: u8, report: EventReport| async move {
+        println!("{}", report.event_type);
+    })
+    .run()
+    .await
+});
+```
+
+### Example
+
+`examples/loopback.rs` runs a pretend phone and a client over TCP on localhost, covering browsing, reading, sending and notifications:
+
+```bash
+cargo run --example loopback
+```
+
+## Bluetooth Notes
+
+* **RFCOMM (GOEP 1.1)** is a stream socket. Leave Single Response Mode off.
+* **L2CAP (GOEP 2.0)**: when the SDP record has a `GoepL2CapPsm`, connect over L2CAP in Enhanced Retransmission Mode, set `with_max_packet_length` to at most the channel MTU and enable `with_single_response_mode(true)`. SRM is then negotiated for every GET and PUT, as MAP requires.
+* If the phone's `MapSupportedFeatures` has bit 19 set, send your own features in CONNECT with `MasClient::with_supported_features`.
+* Pairing, SDP registration and queries, and opening sockets belong to the Bluetooth stack, not this crate. MAP requires an encrypted, bonded link; OBEX authentication is not used.
+
+## Specification Coverage
+
+| MAP 1.4.2 section | Status |
+|-------------------|--------|
+| 3.1.1 Handles, 3.1.10 to 3.1.16 timestamps and identifiers | Implemented |
+| 3.1.3 bMessage, versions 1.0 and 1.1 | Implemented |
+| 3.1.5 Folder-Listing | Implemented |
+| 3.1.6 Messages-Listing, versions 1.0 and 1.1 | Implemented |
+| 3.1.7 MAP-Event-Report, versions 1.0, 1.1 and 1.2 | Implemented |
+| 3.1.9 Conversation-Listing | Implemented |
+| 4 Features, `MapSupportedFeatures` | Implemented |
+| 5.1 to 5.14 every MAP function | Implemented for clients and servers |
+| 6.3.1 Application Parameters | Every tag |
+| 6.3.3 Error codes | Exposed as OBEX response codes |
+| 6.4 Session initialization and termination | Implemented |
+| 6.4.6 Authentication, 6.5 Reliable sessions | Not used by MAP |
+| 7.1 SDP records | UUIDs and attribute ids; registration is left to the Bluetooth stack |
+
+The specification is in [`docs/MAP.pdf`](docs/MAP.pdf).
+
+## Minimum Supported Rust Version
+
+Rust 1.85, checked in CI.
